@@ -4,6 +4,7 @@ from typing import NamedTuple
 
 import pytest
 
+from domain.task_template.aggregate import TaskTemplate
 from domain.task_template.entities import (
     DailyTrigger,
     MonthlyTrigger,
@@ -21,6 +22,7 @@ from domain.task_template.value_objects import (
     Month,
     Weekday,
 )
+from domain.user.aggregate import User
 
 
 class OneTimeTriggerTestCase(NamedTuple):
@@ -29,6 +31,55 @@ class OneTimeTriggerTestCase(NamedTuple):
     check_day: datetime.date
     expected_occurs: bool
     expected_reminder: datetime.datetime | None
+
+
+@pytest.mark.parametrize(
+    OneTimeTriggerTestCase._fields,
+    [
+        OneTimeTriggerTestCase(
+            occurrence_date=datetime.date.fromisoformat("2026-05-19"),
+            reminder_time=datetime.time.fromisoformat("12:31:00"),
+            check_day=datetime.date.fromisoformat("2026-05-19"),
+            expected_occurs=True,
+            expected_reminder=datetime.datetime.fromisoformat("2026-05-19T12:31:00"),
+        ),
+        OneTimeTriggerTestCase(
+            occurrence_date=datetime.date.fromisoformat("2026-05-19"),
+            reminder_time=None,
+            check_day=datetime.date.fromisoformat("2026-05-19"),
+            expected_occurs=True,
+            expected_reminder=None,
+        ),
+        OneTimeTriggerTestCase(
+            occurrence_date=datetime.date.fromisoformat("2026-05-19"),
+            reminder_time=datetime.time.fromisoformat("12:31:00"),
+            check_day=datetime.date.fromisoformat("2026-05-20"),
+            expected_occurs=False,
+            expected_reminder=None,
+        ),
+    ],
+)
+def test_task_template(
+    user: User,
+    occurrence_date: datetime.date,
+    reminder_time: datetime.time | None,
+    check_day: datetime.date,
+    expected_occurs: bool,
+    expected_reminder: datetime.datetime | None,
+):
+    now = datetime.datetime.now()
+    trigger = OneTimeTrigger(
+        id=uuid.uuid4(),
+        occurrence_date=occurrence_date,
+        reminder_time=reminder_time,
+    )
+
+    task_template = TaskTemplate.create(
+        user_id=user.id, title="test", description="test", trigger=trigger, now=now
+    )
+
+    assert task_template.occurs_on(check_day) == expected_occurs
+    assert task_template.reminder_at(check_day) == expected_reminder
 
 
 @pytest.mark.parametrize(

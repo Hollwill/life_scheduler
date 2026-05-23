@@ -3,7 +3,7 @@ import datetime
 import typing
 import uuid
 
-from domain.common import Entity
+from domain.common import AggregateRoot, Entity
 from domain.task_template.exceptions import (
     EmptyWeekdaysException,
     InvalidYearlyDateException,
@@ -67,7 +67,6 @@ class OneTimeTrigger(ReminderTimeTrigger):
 
 
 class DailyTrigger(ReminderTimeTrigger):
-
     type: typing.ClassVar[TriggerType] = TriggerType.DAILY
 
     def __init__(self, id: uuid.UUID, reminder_time: datetime.time | None = None):
@@ -78,7 +77,6 @@ class DailyTrigger(ReminderTimeTrigger):
 
 
 class WeeklyTrigger(ReminderTimeTrigger):
-
     type: typing.ClassVar[TriggerType] = TriggerType.WEEKLY
 
     def __init__(
@@ -97,7 +95,6 @@ class WeeklyTrigger(ReminderTimeTrigger):
 
 
 class MonthlyTrigger(ReminderTimeTrigger):
-
     type: typing.ClassVar[TriggerType] = TriggerType.MONTHLY
 
     def __init__(
@@ -114,7 +111,6 @@ class MonthlyTrigger(ReminderTimeTrigger):
 
 
 class YearlyTrigger(ReminderTimeTrigger):
-
     type: typing.ClassVar[TriggerType] = TriggerType.YEARLY
 
     def __init__(
