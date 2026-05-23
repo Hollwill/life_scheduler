@@ -3,7 +3,7 @@ import datetime
 import typing
 import uuid
 
-from domain.common import AggregateRoot, Entity
+from domain.common import Entity
 from domain.task_template.exceptions import (
     EmptyWeekdaysException,
     InvalidYearlyDateException,
