@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 
 from application.task_template.commands import (
@@ -41,7 +43,7 @@ async def test_create_task_template_handler_creates_and_saves_template(
     task_template_repository = MemoryTaskTemplateRepository()
     user_repository = MemoryUserRepository()
 
-    await user_repository.add(user)
+    await user_repository.save(user)
 
     handler = CreateTaskTemplateHandler(
         task_template_repository=task_template_repository,
@@ -53,6 +55,7 @@ async def test_create_task_template_handler_creates_and_saves_template(
         title=task_template_title,
         description=task_template_description,
         trigger=trigger,
+        now=datetime.datetime.now(),
     )
 
     task_template_id = await handler.handle(command)
@@ -105,6 +108,7 @@ async def test_create_task_template_user_not_found(
         title=task_template_title,
         description=task_template_description,
         trigger=trigger,
+        now=datetime.datetime.now(),
     )
 
     with pytest.raises(UserNotFoundException):

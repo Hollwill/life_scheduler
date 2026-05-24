@@ -9,3 +9,13 @@ class UserNotFoundException(ApplicationException):
     @property
     def message_template(self) -> str:
         return "User with id {user_id} not found"
+
+
+class TaskTemplateNotFoundException(ApplicationException):
+    @property
+    def code(self) -> str:
+        return "task_template_not_found"
+
+    @property
+    def message_template(self) -> str:
+        return "Task template with id {task_template_id} not found"
