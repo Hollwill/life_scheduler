@@ -1,12 +1,15 @@
+import datetime
 import uuid
 
 import pytest
 from pytest import FixtureRequest
 
+from domain.task_template.aggregate import TaskTemplate
 from domain.task_template.entities import (
     DailyTrigger,
     MonthlyTrigger,
     OneTimeTrigger,
+    Trigger,
     WeeklyTrigger,
     YearlyTrigger,
 )
@@ -37,7 +40,6 @@ def trigger(request: FixtureRequest):
     trigger_type: TriggerType = params["type"]
 
     match trigger_type:
-
         case TriggerType.DAILY:
             return DailyTrigger(
                 id=uuid.uuid4(),
@@ -74,3 +76,52 @@ def trigger(request: FixtureRequest):
             )
         case _:
             raise ValueError(f"Unknown trigger type: {trigger_type}")
+
+
+@pytest.fixture
+def task_template_title() -> str:
+    return "Default Title"
+
+
+@pytest.fixture
+def task_template_description() -> str:
+    return "Default Description"
+
+
+@pytest.fixture
+def task_template_is_active() -> bool:
+    return True
+
+
+@pytest.fixture
+def task_template_created_at() -> datetime.datetime:
+    return datetime.datetime.now()
+
+
+@pytest.fixture
+def task_template_updated_at(
+    task_template_created_at: datetime.datetime,
+) -> datetime.datetime:
+    return task_template_created_at
+
+
+@pytest.fixture
+def task_template(
+    user_id: uuid.UUID,
+    task_template_title: str,
+    task_template_description: str,
+    trigger: Trigger,
+    task_template_is_active: bool,
+    task_template_created_at: datetime.datetime,
+    task_template_updated_at: datetime.datetime,
+) -> TaskTemplate:
+    return TaskTemplate(
+        id=uuid.uuid4(),
+        user_id=user_id,
+        title=task_template_title,
+        description=task_template_description,
+        trigger=trigger,
+        is_active=task_template_is_active,
+        created_at=task_template_created_at,
+        updated_at=task_template_updated_at,
+    )

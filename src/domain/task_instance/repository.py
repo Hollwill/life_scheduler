@@ -1,0 +1,14 @@
+import abc
+import uuid
+
+from domain.task_instance.aggregate import TaskInstance
+
+
+class TaskInstanceRepository(abc.ABC):
+    @abc.abstractmethod
+    async def get_by_id(self, task_instance_id: uuid.UUID) -> TaskInstance | None:
+        pass
+
+    @abc.abstractmethod
+    async def save(self, task_instance: TaskInstance) -> None:
+        pass
