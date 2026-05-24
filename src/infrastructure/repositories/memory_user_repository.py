@@ -1,3 +1,4 @@
+import copy
 import uuid
 
 from domain.user.aggregate import User
@@ -9,7 +10,10 @@ class MemoryUserRepository(UserRepository):
         self.users: dict[uuid.UUID, User] = {}
 
     async def get_by_id(self, user_id: uuid.UUID) -> User | None:
-        return self.users.get(user_id)
+        user = self.users.get(user_id)
+        if user is None:
+            return None
+        return copy.deepcopy(user)
 
     async def save(self, user: User) -> None:
-        self.users[user.id] = user
+        self.users[user.id] = copy.deepcopy(user)
