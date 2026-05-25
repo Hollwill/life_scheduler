@@ -6,19 +6,11 @@ from domain.user.aggregate import User
 from infrastructure.repositories.memory_user_repository import MemoryUserRepository
 
 
-@pytest.mark.parametrize(
-    "name",
-    [
-        ("Test User"),
-    ],
-)
-async def test_memory_user_repository_save_and_get(name: str):
+async def test_memory_user_repository_save_and_get(user: User):
     repo = MemoryUserRepository()
-    user_id = uuid.uuid4()
-    user = User(id=user_id, name=name)
 
     await repo.save(user)
-    retrieved = await repo.get_by_id(user_id)
+    retrieved = await repo.get_by_id(user.id)
 
     assert retrieved is not None
     assert retrieved.id == user.id
@@ -33,27 +25,26 @@ async def test_memory_user_repository_get_none():
 
 
 @pytest.mark.parametrize(
-    "name",
-    [
-        ("Original Name"),
-    ],
+    "name_to_change",
+    ("Changed Name",),
 )
-async def test_memory_user_repository_deepcopy_isolation(name: str):
+async def test_memory_user_repository_deepcopy_isolation(
+    user: User, user_name: str, name_to_change: str
+):
     repo = MemoryUserRepository()
-    user = User(id=uuid.uuid4(), name=name)
 
     await repo.save(user)
 
     # Change original object
-    user.name = "Changed Name"
+    user.name = name_to_change
 
     # Check that repo still has the original data
     retrieved = await repo.get_by_id(user.id)
-    assert retrieved.name == name
+    assert retrieved.name == user_name
 
     # Change retrieved object
-    retrieved.name = "Changed Again"
+    retrieved.name = name_to_change
 
     # Check that repo still has the original data
     retrieved_again = await repo.get_by_id(user.id)
-    assert retrieved_again.name == name
+    assert retrieved_again.name == user_name

@@ -1,47 +1,106 @@
 import datetime
 import typing
-import uuid
 
 import pytest
 
-from domain.task_instance.aggregate import TaskInstance
-from domain.task_instance.exceptions import TaskInstanceNotScheduledException
+from domain.task_instance.aggregate import TaskInstance, TaskStatus
+from domain.task_instance.exceptions import (
+    TaskInstanceInvalidPostponeDateException,
+    TaskInstanceInvalidStatusException,
+    TaskInstanceNotScheduledException,
+)
 from domain.task_instance.service import TaskInstanceService
 from domain.task_template.value_objects import TriggerType, Weekday
 
 
+class TaskInstanceTestCase(typing.NamedTuple):
+    title: str
+    description: str
+
+
+@pytest.mark.parametrize("task_instance_status", (TaskStatus.PENDING,))
+def test_task_instance_completion(
+    task_instance: TaskInstance,
+):
+
+    assert not task_instance.is_completed
+
+    task_instance.complete()
+
+    assert task_instance.is_completed
+    assert task_instance.status == TaskStatus.COMPLETED
+
+
+@pytest.mark.parametrize("task_instance_status", (TaskStatus.PENDING,))
+def test_task_instance_cancellation(task_instance: TaskInstance):
+
+    task_instance.cancel()
+
+    assert not task_instance.is_completed
+    assert task_instance.status == TaskStatus.CANCELLED
+
+
+@pytest.mark.parametrize("task_instance_status", (TaskStatus.PENDING,))
+def test_task_instance_invalid_completion_transition(task_instance: TaskInstance):
+
+    task_instance.cancel()
+
+    with pytest.raises(TaskInstanceInvalidStatusException):
+        task_instance.complete()
+
+
+@pytest.mark.parametrize("task_instance_status", (TaskStatus.PENDING,))
+def test_task_instance_invalid_cancellation_transition(task_instance: TaskInstance):
+
+    task_instance.complete()
+
+    with pytest.raises(TaskInstanceInvalidStatusException):
+        task_instance.cancel()
+
+
+@pytest.mark.parametrize("task_instance_status", (TaskStatus.PENDING,))
+def test_task_instance_postpone_success(
+    task_instance: TaskInstance,
+    task_instance_occurrence_date: datetime.date,
+    now: datetime.datetime,
+):
+
+    new_date = task_instance_occurrence_date + datetime.timedelta(days=1)
+    task_instance.postpone(new_occurrence_date=new_date, now=now, reason="Too busy")
+
+    assert task_instance.occurrence_date == new_date
+    assert task_instance.status == TaskStatus.PENDING
+
+
+@pytest.mark.parametrize("task_instance_status", (TaskStatus.PENDING,))
+def test_task_instance_postpone_invalid_transition(task_instance: TaskInstance, now):
+
+    task_instance.complete()
+
+    with pytest.raises(TaskInstanceInvalidStatusException):
+        task_instance.postpone(
+            new_occurrence_date=now.date() + datetime.timedelta(days=1), now=now
+        )
+
+
+class TaskInstancePostponeInvalidDateTestCase(typing.NamedTuple):
+    now: datetime.datetime
+    postpone_offset: datetime.timedelta
+
+
 @pytest.mark.parametrize(
-    "initial_data, completion_offset",
-    [
-        (
-            {
-                "title": "Test Task",
-                "description": "Test Description",
-            },
-            datetime.timedelta(minutes=5),
-        ),
-    ],
+    "postpone_offset", (datetime.timedelta(days=0), datetime.timedelta(days=-1))
 )
-def test_task_instance_completion(initial_data, completion_offset):
-    now = datetime.datetime.now()
-    instance = TaskInstance.create(
-        task_template_id=uuid.uuid4(),
-        user_id=uuid.uuid4(),
-        title=initial_data["title"],
-        description=initial_data["description"],
-        occurrence_date=now.date(),
-        scheduled_at=now,
-        now=now,
-    )
+def test_task_instance_postpone_invalid_date(
+    task_instance: TaskInstance,
+    now: datetime.datetime,
+    postpone_offset: datetime.timedelta,
+):
 
-    assert not instance.is_completed
-    assert instance.completed_at is None
-
-    completion_time = now + completion_offset
-    instance.complete(completion_time)
-
-    assert instance.is_completed
-    assert instance.completed_at == completion_time
+    with pytest.raises(TaskInstanceInvalidPostponeDateException):
+        task_instance.postpone(
+            new_occurrence_date=now.date() + postpone_offset, now=now
+        )
 
 
 class TaskInstanceServiceSuccessTestCase(typing.NamedTuple):

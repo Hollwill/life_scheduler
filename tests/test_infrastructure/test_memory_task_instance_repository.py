@@ -1,5 +1,3 @@
-import datetime
-import typing
 import uuid
 
 import pytest
@@ -10,53 +8,18 @@ from infrastructure.repositories.memory_task_instance_repository import (
 )
 
 
-class TaskInstanceRepoTestCase(typing.NamedTuple):
-    title: str
-    description: str
-    occurrence_date: datetime.date
-    scheduled_at: datetime.datetime
-    created_at: datetime.datetime
-
-
-@pytest.mark.parametrize(
-    TaskInstanceRepoTestCase._fields,
-    [
-        TaskInstanceRepoTestCase(
-            title="Test Task",
-            description="Description",
-            occurrence_date=datetime.date.fromisoformat("2026-05-24"),
-            scheduled_at=datetime.datetime.fromisoformat("2026-05-24T10:00:00"),
-            created_at=datetime.datetime.fromisoformat("2026-05-24T09:00:00"),
-        )
-    ],
-)
 async def test_memory_task_instance_repository_save_and_get(
-    title: str,
-    description: str,
-    occurrence_date: datetime.date,
-    scheduled_at: datetime.datetime,
-    created_at: datetime.datetime,
+    task_instance: TaskInstance,
 ):
     repo = MemoryTaskInstanceRepository()
-    task_instance_id = uuid.uuid4()
-    instance = TaskInstance(
-        id=task_instance_id,
-        task_template_id=uuid.uuid4(),
-        user_id=uuid.uuid4(),
-        title=title,
-        description=description,
-        occurrence_date=occurrence_date,
-        scheduled_at=scheduled_at,
-        created_at=created_at,
-    )
 
-    await repo.save(instance)
-    retrieved = await repo.get_by_id(task_instance_id)
+    await repo.save(task_instance)
+    retrieved = await repo.get_by_id(task_instance.id)
 
     assert retrieved is not None
-    assert retrieved.id == instance.id
-    assert retrieved.title == instance.title
-    assert retrieved is not instance  # Deepcopy check
+    assert retrieved.id == task_instance.id
+    assert retrieved.title == task_instance.title
+    assert retrieved is not task_instance  # Deepcopy check
 
 
 async def test_memory_task_instance_repository_get_none():
@@ -66,44 +29,30 @@ async def test_memory_task_instance_repository_get_none():
 
 
 @pytest.mark.parametrize(
-    ("title", "occurrence_date", "created_at"),
+    "title_to_change",
     [
-        (
-            "Original Title",
-            datetime.date.fromisoformat("2026-05-24"),
-            datetime.datetime.fromisoformat("2026-05-24T09:00:00"),
-        )
+        "Changed Title",
     ],
 )
 async def test_memory_task_instance_repository_deepcopy_isolation(
-    title: str,
-    occurrence_date: datetime.date,
-    created_at: datetime.datetime,
+    task_instance: TaskInstance,
+    task_instance_title: str,
+    title_to_change: str,
 ):
     repo = MemoryTaskInstanceRepository()
-    instance = TaskInstance(
-        id=uuid.uuid4(),
-        task_template_id=uuid.uuid4(),
-        user_id=uuid.uuid4(),
-        title=title,
-        description="Description",
-        occurrence_date=occurrence_date,
-        scheduled_at=None,
-        created_at=created_at,
-    )
 
-    await repo.save(instance)
+    await repo.save(task_instance)
 
     # Change original object
-    instance.title = "Changed Title"
+    task_instance.title = title_to_change
 
     # Check that repo still has the original data
-    retrieved = await repo.get_by_id(instance.id)
-    assert retrieved.title == title
+    retrieved = await repo.get_by_id(task_instance.id)
+    assert retrieved.title == task_instance_title
 
     # Change retrieved object
-    retrieved.title = "Changed Again"
+    retrieved.title = title_to_change
 
     # Check that repo still has the original data
-    retrieved_again = await repo.get_by_id(instance.id)
-    assert retrieved_again.title == title
+    retrieved_again = await repo.get_by_id(task_instance.id)
+    assert retrieved_again.title == task_instance_title

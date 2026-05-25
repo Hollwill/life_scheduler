@@ -4,6 +4,7 @@ import uuid
 import pytest
 from pytest import FixtureRequest
 
+from domain.task_instance.aggregate import TaskInstance, TaskStatus
 from domain.task_template.aggregate import TaskTemplate
 from domain.task_template.entities import (
     DailyTrigger,
@@ -15,6 +16,11 @@ from domain.task_template.entities import (
 )
 from domain.task_template.value_objects import DayOfMonth, TriggerType
 from domain.user.aggregate import User
+
+
+@pytest.fixture
+def now() -> datetime.datetime:
+    return datetime.datetime.now()
 
 
 @pytest.fixture
@@ -35,9 +41,14 @@ def user(user_id: uuid.UUID, user_name: str) -> User:
 @pytest.fixture
 def trigger(request: FixtureRequest):
 
-    params = request.param
+    trigger_type = None
+    params = {}
+    if getattr(request, "param", None):
+        params = request.param
 
-    trigger_type: TriggerType = params["type"]
+        trigger_type = params.get("type")
+    else:
+        trigger_type = TriggerType.DAILY
 
     match trigger_type:
         case TriggerType.DAILY:
@@ -124,4 +135,72 @@ def task_template(
         is_active=task_template_is_active,
         created_at=task_template_created_at,
         updated_at=task_template_updated_at,
+    )
+
+
+@pytest.fixture
+def task_instance_id() -> uuid.UUID:
+    return uuid.uuid4()
+
+
+@pytest.fixture
+def task_instance_title() -> str:
+    return "Default Title"
+
+
+@pytest.fixture
+def task_instance_description() -> str:
+    return "Default Description"
+
+
+@pytest.fixture
+def task_instance_occurrence_date(now: datetime.datetime) -> datetime.date:
+    return now.date()
+
+
+@pytest.fixture
+def task_instance_scheduled_at(now: datetime.datetime) -> datetime.datetime:
+    return now
+
+
+@pytest.fixture
+def task_instance_created_at(now: datetime.datetime) -> datetime.datetime:
+    return now
+
+
+@pytest.fixture
+def task_instance_status() -> TaskStatus:
+    return TaskStatus.PENDING
+
+
+@pytest.fixture
+def task_instance_postpone_reason() -> str | None:
+    return None
+
+
+@pytest.fixture
+def task_instance(
+    task_instance_id: uuid.UUID,
+    task_template: TaskTemplate,
+    user: User,
+    task_instance_title: str,
+    task_instance_description: str,
+    task_instance_occurrence_date: datetime.date,
+    task_instance_scheduled_at: datetime.datetime,
+    task_instance_created_at: datetime.datetime,
+    task_instance_status: TaskStatus,
+    task_instance_postpone_reason: str | None,
+):
+
+    return TaskInstance(
+        id=task_instance_id,
+        task_template_id=task_template.id,
+        user_id=user.id,
+        title=task_instance_title,
+        description=task_instance_description,
+        occurrence_date=task_instance_occurrence_date,
+        scheduled_at=task_instance_scheduled_at,
+        created_at=task_instance_created_at,
+        status=task_instance_status,
+        postpone_reason=task_instance_postpone_reason,
     )
