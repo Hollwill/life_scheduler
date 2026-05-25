@@ -1,4 +1,5 @@
 import datetime
+import typing
 import uuid
 
 import pytest
@@ -41,8 +42,8 @@ def user(user_id: uuid.UUID, user_name: str) -> User:
 @pytest.fixture
 def trigger(request: FixtureRequest):
 
-    trigger_type = None
-    params = {}
+    trigger_type: TriggerType | None = None
+    params: dict[str, typing.Any] = {}
     if getattr(request, "param", None):
         params = request.param
 
