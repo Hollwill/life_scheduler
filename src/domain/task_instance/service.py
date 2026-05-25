@@ -5,9 +5,9 @@ from domain.task_instance.exceptions import TaskInstanceNotScheduledException
 from domain.task_template.aggregate import TaskTemplate
 
 
-class TaskInstanceService:
+class TaskGenerationService:
     @staticmethod
-    def create_from_template(
+    def generate_from_template(
         template: TaskTemplate,
         scheduled_day: datetime.date,
         now: datetime.datetime,

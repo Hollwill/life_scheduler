@@ -9,7 +9,8 @@ from domain.task_instance.exceptions import (
     TaskInstanceInvalidStatusException,
     TaskInstanceNotScheduledException,
 )
-from domain.task_instance.service import TaskInstanceService
+from domain.task_instance.service import TaskGenerationService
+from domain.task_template.aggregate import TaskTemplate
 from domain.task_template.value_objects import TriggerType, Weekday
 
 
@@ -139,7 +140,7 @@ class TaskInstanceServiceSuccessTestCase(typing.NamedTuple):
         ),
     ],
 )
-def test_create_task_instance_from_template_success(
+def test_generate_task_instance_from_template_success(
     task_template,
     task_template_title: str,
     task_template_description: str,
@@ -148,7 +149,7 @@ def test_create_task_instance_from_template_success(
     creation_now: datetime.datetime,
     expected_scheduled_at: datetime.datetime,
 ):
-    instance = TaskInstanceService.create_from_template(
+    instance = TaskGenerationService.generate_from_template(
         template=task_template, scheduled_day=scheduled_day, now=creation_now
     )
     assert instance.task_template_id == task_template.id
@@ -180,11 +181,11 @@ def test_create_task_instance_from_template_success(
         ),
     ),
 )
-def test_create_task_instance_from_template_not_scheduled(
+def test_generate_task_instance_from_template_not_scheduled(
     task_template, scheduled_day, creation_now
 ):
     with pytest.raises(TaskInstanceNotScheduledException):
-        TaskInstanceService.create_from_template(
+        TaskGenerationService.generate_from_template(
             template=task_template, scheduled_day=scheduled_day, now=creation_now
         )
 
@@ -208,11 +209,13 @@ def test_create_task_instance_from_template_not_scheduled(
         ),
     ),
 )
-def test_create_task_instance_independence(task_template, new_title):
+def test_generate_task_instance_independence(
+    task_template: TaskTemplate, new_title: str
+):
     scheduled_day = datetime.date.fromisoformat("2026-05-24")
     creation_now = datetime.datetime.fromisoformat("2026-05-24T08:00:00")
 
-    instance = TaskInstanceService.create_from_template(
+    instance = TaskGenerationService.generate_from_template(
         template=task_template, scheduled_day=scheduled_day, now=creation_now
     )
 
