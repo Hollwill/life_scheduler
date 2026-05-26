@@ -8,6 +8,7 @@ from domain.task_template.aggregate import TaskTemplate
 from infrastructure.repositories.memory_task_template_repository import (
     MemoryTaskTemplateRepository,
 )
+from tests.factories.task_template import TaskTemplateFactory
 
 
 class TaskTemplateRepoTestCase(typing.NamedTuple):
@@ -53,6 +54,7 @@ async def test_memory_task_template_repository_deepcopy_isolation(
 
     # Check that repo still has the original data
     retrieved = await repo.get_by_id(task_template.id)
+    assert retrieved
     assert retrieved.title == task_template_title
 
     # Change retrieved object
@@ -60,4 +62,37 @@ async def test_memory_task_template_repository_deepcopy_isolation(
 
     # Check that repo still has the original data
     retrieved_again = await repo.get_by_id(task_template.id)
+
+    assert retrieved_again
     assert retrieved_again.title == task_template_title
+
+
+@pytest.mark.parametrize(
+    "task_templates",
+    (
+        (
+            TaskTemplateFactory.build(),
+            TaskTemplateFactory.build(),
+        )
+    ),
+)
+async def test_memory_task_template_repository_get_all_active(
+    task_templates: typing.List[TaskTemplate],
+):
+    repo = MemoryTaskTemplateRepository()
+
+    task_template1 = TaskTemplateFactory.build()
+    task_template2 = TaskTemplateFactory.build()
+    task_template_inactive = TaskTemplateFactory.build(is_active=False)
+
+    await repo.save(task_template1)
+    await repo.save(task_template2)
+    await repo.save(task_template_inactive)
+
+    task_templates = await repo.get_all_active()
+
+    assert len(task_templates) == 2
+
+    assert {task_template1.id, task_template2.id} == set(
+        task_template.id for task_template in task_templates
+    )

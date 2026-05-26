@@ -1,4 +1,5 @@
 import datetime
+import typing
 import uuid
 
 from domain.common import AggregateRoot
@@ -18,13 +19,13 @@ class TaskTemplate(AggregateRoot[uuid.UUID]):
         updated_at: datetime.datetime,
     ):
         super().__init__(id)
-        self.user_id = user_id
-        self.title = title
-        self.description = description
-        self.trigger = trigger
-        self.is_active = is_active
-        self.created_at = created_at
-        self.updated_at = updated_at
+        self.user_id: uuid.UUID = user_id
+        self.title: str = title
+        self.description: str = description
+        self.trigger: Trigger = trigger
+        self.is_active: bool = is_active
+        self.created_at: datetime.datetime = created_at
+        self.updated_at: datetime.datetime = updated_at
 
     @classmethod
     def create(
@@ -34,7 +35,7 @@ class TaskTemplate(AggregateRoot[uuid.UUID]):
         description: str,
         trigger: Trigger,
         now: datetime.datetime,
-    ):
+    ) -> typing.Self:
         return cls(
             id=uuid.uuid4(),
             user_id=user_id,

@@ -14,6 +14,7 @@ dev = [
     "pytest-asyncio>=0.23.5",
     "time-machine[dateutil]>=3.2.0",
     "ruff>=0.15.14",
+    "factory-boy>=3.3.3",
 ]
 
 [tool.isort]
@@ -25,5 +26,3 @@ asyncio_mode = "auto"
 
 [tool.pyright]
 extraPaths = ["src"]
-reportUnusedVariable = "none"
-reportUnboundVariable = "none"

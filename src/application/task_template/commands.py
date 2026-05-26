@@ -10,6 +10,7 @@ from application.task_template.exceptions import (
 from domain.task_template.aggregate import TaskTemplate
 from domain.task_template.entities import Trigger
 from domain.task_template.repository import TaskTemplateRepository
+from domain.user.aggregate import User
 from domain.user.repository import UserRepository
 
 
@@ -27,12 +28,12 @@ class CreateTaskTemplateHandler(CommandHandler[CreateTaskTemplateCommand, uuid.U
         self,
         task_template_repository: TaskTemplateRepository,
         user_repository: UserRepository,
-    ):
-        self.task_template_repository = task_template_repository
-        self.user_repository = user_repository
+    ) -> None:
+        self.task_template_repository: TaskTemplateRepository = task_template_repository
+        self.user_repository: UserRepository = user_repository
 
     async def handle(self, command: CreateTaskTemplateCommand) -> uuid.UUID:
-        user = await self.user_repository.get_by_id(command.user_id)
+        user: User | None = await self.user_repository.get_by_id(command.user_id)
         if user is None:
             raise UserNotFoundException({"user_id": command.user_id})
 
@@ -60,8 +61,8 @@ class UpdateTaskTemplateHandler(CommandHandler[UpdateTaskTemplateCommand, None])
     def __init__(
         self,
         task_template_repository: TaskTemplateRepository,
-    ):
-        self.task_template_repository = task_template_repository
+    ) -> None:
+        self.task_template_repository: TaskTemplateRepository = task_template_repository
 
     async def handle(self, command: UpdateTaskTemplateCommand) -> None:
         task_template = await self.task_template_repository.get_by_id(
@@ -80,3 +81,16 @@ class UpdateTaskTemplateHandler(CommandHandler[UpdateTaskTemplateCommand, None])
         )
 
         await self.task_template_repository.save(task_template)
+
+
+@dataclasses.dataclass
+class GenerateTaskForDayCommand:
+    day: datetime.date
+
+
+class GenerateTaskForDayHandler(CommandHandler[GenerateTaskForDayCommand, None]):
+    def __init__(self, task_template_repository: TaskTemplateRepository) -> None:
+        self.task_template_repository: TaskTemplateRepository = task_template_repository
+
+    async def handle(self, command: GenerateTaskForDayCommand) -> None:
+        pass

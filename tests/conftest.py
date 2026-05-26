@@ -17,6 +17,7 @@ from domain.task_template.entities import (
 )
 from domain.task_template.value_objects import DayOfMonth, TriggerType
 from domain.user.aggregate import User
+from tests.factories.task_template import TaskTemplateFactory
 
 
 @pytest.fixture
@@ -127,8 +128,7 @@ def task_template(
     task_template_created_at: datetime.datetime,
     task_template_updated_at: datetime.datetime,
 ) -> TaskTemplate:
-    return TaskTemplate(
-        id=uuid.uuid4(),
+    return TaskTemplateFactory.build(
         user_id=user_id,
         title=task_template_title,
         description=task_template_description,
