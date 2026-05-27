@@ -9,23 +9,17 @@ from application.task_template.commands import (
 from application.task_template.exceptions import UserNotFoundException
 from domain.task_template.aggregate import TaskTemplate
 from domain.task_template.entities import Trigger
-from domain.task_template.value_objects import TriggerType, Weekday
+from domain.task_template.value_objects import Weekday
 from domain.user.aggregate import User
 from infrastructure.repositories.memory_task_template_repository import (
     MemoryTaskTemplateRepository,
 )
 from infrastructure.repositories.memory_user_repository import MemoryUserRepository
+from tests.factories.trigger import WeeklyTriggerFactory
 
 
 @pytest.mark.parametrize(
-    "trigger",
-    (
-        {
-            "type": TriggerType.WEEKLY,
-            "weekdays": {Weekday.MONDAY},
-        },
-    ),
-    indirect=True,
+    "trigger", (WeeklyTriggerFactory.build(weekdays=frozenset([Weekday.MONDAY])),)
 )
 @pytest.mark.parametrize(
     ("task_template_title", "task_template_description"),
@@ -76,14 +70,7 @@ async def test_create_task_template_handler_creates_and_saves_template(
 
 
 @pytest.mark.parametrize(
-    "trigger",
-    (
-        {
-            "type": TriggerType.WEEKLY,
-            "weekdays": {Weekday.MONDAY},
-        },
-    ),
-    indirect=True,
+    "trigger", (WeeklyTriggerFactory.build(weekdays=frozenset([Weekday.MONDAY])),)
 )
 @pytest.mark.parametrize(
     ("task_template_title", "task_template_description"),

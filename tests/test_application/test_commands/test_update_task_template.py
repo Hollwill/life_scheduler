@@ -10,21 +10,15 @@ from application.task_template.commands import (
 from application.task_template.exceptions import TaskTemplateNotFoundException
 from domain.task_template.aggregate import TaskTemplate
 from domain.task_template.entities import DailyTrigger, Trigger
-from domain.task_template.value_objects import TriggerType, Weekday
+from domain.task_template.value_objects import Weekday
 from infrastructure.repositories.memory_task_template_repository import (
     MemoryTaskTemplateRepository,
 )
+from tests.factories.trigger import WeeklyTriggerFactory
 
 
 @pytest.mark.parametrize(
-    "trigger",
-    (
-        {
-            "type": TriggerType.WEEKLY,
-            "weekdays": {Weekday.MONDAY},
-        },
-    ),
-    indirect=True,
+    "trigger", (WeeklyTriggerFactory.build(weekdays=frozenset([Weekday.MONDAY])),)
 )
 async def test_update_task_template_handler_updates_and_saves_template(
     trigger: Trigger,
@@ -75,14 +69,7 @@ async def test_update_task_template_handler_updates_and_saves_template(
 
 
 @pytest.mark.parametrize(
-    "trigger",
-    (
-        {
-            "type": TriggerType.WEEKLY,
-            "weekdays": {Weekday.MONDAY},
-        },
-    ),
-    indirect=True,
+    "trigger", (WeeklyTriggerFactory.build(weekdays=frozenset([Weekday.MONDAY])),)
 )
 async def test_update_task_template_not_found(
     trigger: Trigger,

@@ -19,6 +19,7 @@ class TaskTemplateRepoTestCase(typing.NamedTuple):
     updated_at: datetime.datetime
 
 
+@pytest.mark.parametrize("task_template", (TaskTemplateFactory.build(),))
 async def test_memory_task_template_repository_save_and_get(
     task_template: TaskTemplate,
 ):
@@ -39,12 +40,14 @@ async def test_memory_task_template_repository_get_none():
     assert retrieved is None
 
 
+@pytest.mark.parametrize("task_template", (TaskTemplateFactory.build(),))
 @pytest.mark.parametrize("title_to_change", ("Changed Title",))
 async def test_memory_task_template_repository_deepcopy_isolation(
     task_template: TaskTemplate,
-    task_template_title: str,
     title_to_change: str,
 ):
+    task_template_title = task_template.title
+
     repo = MemoryTaskTemplateRepository()
 
     await repo.save(task_template)

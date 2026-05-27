@@ -4,7 +4,9 @@ import uuid
 import factory
 
 from domain.task_template.aggregate import TaskTemplate
-from tests.factories.trigger import DailyTriggerFactory
+from tests.factories.trigger import (
+    DailyTriggerFactory,
+)
 
 
 class TaskTemplateFactory(factory.Factory):
