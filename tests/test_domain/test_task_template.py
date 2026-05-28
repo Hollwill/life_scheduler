@@ -23,6 +23,7 @@ from domain.task_template.value_objects import (
     Weekday,
 )
 from domain.user.aggregate import User
+from tests.factories.user import UserFactory
 
 
 class OneTimeTriggerTestCase(NamedTuple):
@@ -33,6 +34,7 @@ class OneTimeTriggerTestCase(NamedTuple):
     expected_reminder: datetime.datetime | None
 
 
+@pytest.mark.parametrize("user", (UserFactory.build(),))
 @pytest.mark.parametrize(
     OneTimeTriggerTestCase._fields,
     [

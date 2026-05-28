@@ -16,8 +16,10 @@ from infrastructure.repositories.memory_task_template_repository import (
 )
 from infrastructure.repositories.memory_user_repository import MemoryUserRepository
 from tests.factories.trigger import WeeklyTriggerFactory
+from tests.factories.user import UserFactory
 
 
+@pytest.mark.parametrize("user", (UserFactory.build(),))
 @pytest.mark.parametrize(
     "trigger", (WeeklyTriggerFactory.build(weekdays=frozenset([Weekday.MONDAY])),)
 )
@@ -69,6 +71,7 @@ async def test_create_task_template_handler_creates_and_saves_template(
     assert task_template_id == saved_template.id
 
 
+@pytest.mark.parametrize("user", (UserFactory.build(),))
 @pytest.mark.parametrize(
     "trigger", (WeeklyTriggerFactory.build(weekdays=frozenset([Weekday.MONDAY])),)
 )

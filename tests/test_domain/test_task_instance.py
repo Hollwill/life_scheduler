@@ -12,6 +12,7 @@ from domain.task_instance.exceptions import (
 from domain.task_instance.service import TaskGenerationService
 from domain.task_template.aggregate import TaskTemplate
 from domain.task_template.value_objects import Weekday
+from tests.factories.task_instance import TaskInstanceFactory
 from tests.factories.task_template import TaskTemplateFactory
 from tests.factories.trigger import DailyTriggerFactory, WeeklyTriggerFactory
 
@@ -21,7 +22,9 @@ class TaskInstanceTestCase(typing.NamedTuple):
     description: str
 
 
-@pytest.mark.parametrize("task_instance_status", (TaskStatus.PENDING,))
+@pytest.mark.parametrize(
+    "task_instance", (TaskInstanceFactory.build(status=TaskStatus.PENDING),)
+)
 def test_task_instance_completion(
     task_instance: TaskInstance,
 ):
@@ -34,7 +37,9 @@ def test_task_instance_completion(
     assert task_instance.status == TaskStatus.COMPLETED
 
 
-@pytest.mark.parametrize("task_instance_status", (TaskStatus.PENDING,))
+@pytest.mark.parametrize(
+    "task_instance", (TaskInstanceFactory.build(status=TaskStatus.PENDING),)
+)
 def test_task_instance_cancellation(task_instance: TaskInstance):
 
     task_instance.cancel()
@@ -43,7 +48,9 @@ def test_task_instance_cancellation(task_instance: TaskInstance):
     assert task_instance.status == TaskStatus.CANCELLED
 
 
-@pytest.mark.parametrize("task_instance_status", (TaskStatus.PENDING,))
+@pytest.mark.parametrize(
+    "task_instance", (TaskInstanceFactory.build(status=TaskStatus.PENDING),)
+)
 def test_task_instance_invalid_completion_transition(task_instance: TaskInstance):
 
     task_instance.cancel()
@@ -52,7 +59,9 @@ def test_task_instance_invalid_completion_transition(task_instance: TaskInstance
         task_instance.complete()
 
 
-@pytest.mark.parametrize("task_instance_status", (TaskStatus.PENDING,))
+@pytest.mark.parametrize(
+    "task_instance", (TaskInstanceFactory.build(status=TaskStatus.PENDING),)
+)
 def test_task_instance_invalid_cancellation_transition(task_instance: TaskInstance):
 
     task_instance.complete()
@@ -61,12 +70,14 @@ def test_task_instance_invalid_cancellation_transition(task_instance: TaskInstan
         task_instance.cancel()
 
 
-@pytest.mark.parametrize("task_instance_status", (TaskStatus.PENDING,))
+@pytest.mark.parametrize(
+    "task_instance", (TaskInstanceFactory.build(status=TaskStatus.PENDING),)
+)
 def test_task_instance_postpone_success(
     task_instance: TaskInstance,
-    task_instance_occurrence_date: datetime.date,
     now: datetime.datetime,
 ):
+    task_instance_occurrence_date = task_instance.occurrence_date
 
     new_date = task_instance_occurrence_date + datetime.timedelta(days=1)
     task_instance.postpone(new_occurrence_date=new_date, now=now, reason="Too busy")
@@ -75,7 +86,9 @@ def test_task_instance_postpone_success(
     assert task_instance.status == TaskStatus.PENDING
 
 
-@pytest.mark.parametrize("task_instance_status", (TaskStatus.PENDING,))
+@pytest.mark.parametrize(
+    "task_instance", (TaskInstanceFactory.build(status=TaskStatus.PENDING),)
+)
 def test_task_instance_postpone_invalid_transition(task_instance: TaskInstance, now):
 
     task_instance.complete()
@@ -86,6 +99,9 @@ def test_task_instance_postpone_invalid_transition(task_instance: TaskInstance, 
         )
 
 
+@pytest.mark.parametrize(
+    "task_instance", (TaskInstanceFactory.build(status=TaskStatus.PENDING),)
+)
 @pytest.mark.parametrize(
     "postpone_offset", (datetime.timedelta(days=0), datetime.timedelta(days=-1))
 )

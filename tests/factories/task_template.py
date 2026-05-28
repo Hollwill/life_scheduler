@@ -11,22 +11,22 @@ from tests.factories.trigger import (
 
 class TaskTemplateFactory(factory.Factory):
     class Meta:
-        model: type[TaskTemplate] = TaskTemplate
+        model = TaskTemplate
 
-    id: factory.LazyFunction = factory.LazyFunction(uuid.uuid4)
+    id = factory.LazyFunction(uuid.uuid4)
 
-    user_id: factory.LazyFunction = factory.LazyFunction(uuid.uuid4)
+    user_id = factory.LazyFunction(uuid.uuid4)
 
-    title: factory.Sequence = factory.Sequence(lambda n: f"Task Template #{n}")
+    title = factory.Sequence(lambda n: f"Task Template #{n}")
 
-    description: factory.Faker = factory.Faker("sentence")
+    description = factory.Faker("sentence")
 
-    trigger: factory.SubFactory = factory.SubFactory(DailyTriggerFactory)
+    trigger = factory.SubFactory(DailyTriggerFactory)
 
-    is_active: bool = True
+    is_active = True
 
-    created_at: factory.LazyFunction = factory.LazyFunction(datetime.datetime.now)
+    created_at = factory.LazyFunction(datetime.datetime.now)
 
-    updated_at: factory.LazyAttribute = factory.LazyAttribute(
+    updated_at = factory.LazyAttribute(
         lambda obj: obj.created_at,
     )

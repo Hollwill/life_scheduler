@@ -6,8 +6,10 @@ from domain.task_instance.aggregate import TaskInstance
 from infrastructure.repositories.memory_task_instance_repository import (
     MemoryTaskInstanceRepository,
 )
+from tests.factories.task_instance import TaskInstanceFactory
 
 
+@pytest.mark.parametrize("task_instance", (TaskInstanceFactory.build(),))
 async def test_memory_task_instance_repository_save_and_get(
     task_instance: TaskInstance,
 ):
@@ -28,6 +30,7 @@ async def test_memory_task_instance_repository_get_none():
     assert retrieved is None
 
 
+@pytest.mark.parametrize("task_instance", (TaskInstanceFactory.build(),))
 @pytest.mark.parametrize(
     "title_to_change",
     [
@@ -36,9 +39,10 @@ async def test_memory_task_instance_repository_get_none():
 )
 async def test_memory_task_instance_repository_deepcopy_isolation(
     task_instance: TaskInstance,
-    task_instance_title: str,
     title_to_change: str,
 ):
+    task_instance_title = task_instance.title
+
     repo = MemoryTaskInstanceRepository()
 
     await repo.save(task_instance)

@@ -4,8 +4,10 @@ import pytest
 
 from domain.user.aggregate import User
 from infrastructure.repositories.memory_user_repository import MemoryUserRepository
+from tests.factories.user import UserFactory
 
 
+@pytest.mark.parametrize("user", (UserFactory.build(),))
 async def test_memory_user_repository_save_and_get(user: User):
     repo = MemoryUserRepository()
 
@@ -24,13 +26,15 @@ async def test_memory_user_repository_get_none():
     assert retrieved is None
 
 
+@pytest.mark.parametrize("user", (UserFactory.build(),))
 @pytest.mark.parametrize(
     "name_to_change",
     ("Changed Name",),
 )
 async def test_memory_user_repository_deepcopy_isolation(
-    user: User, user_name: str, name_to_change: str
+    user: User, name_to_change: str
 ):
+    user_name = user.name
     repo = MemoryUserRepository()
 
     await repo.save(user)
