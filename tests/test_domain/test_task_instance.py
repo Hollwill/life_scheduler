@@ -7,7 +7,6 @@ from domain.task_instance.aggregate import TaskInstance, TaskStatus
 from domain.task_instance.exceptions import (
     TaskInstanceInvalidPostponeDateException,
     TaskInstanceInvalidStatusException,
-    TaskInstanceNotScheduledException,
 )
 from domain.task_instance.service import TaskGenerationService
 from domain.task_template.aggregate import TaskTemplate
@@ -131,7 +130,7 @@ def test_task_instance_postpone_invalid_date(
     ),
 )
 @pytest.mark.parametrize(
-    ("scheduled_day", "now", "expected_scheduled_at"),
+    ("generate_day", "now", "expected_scheduled_at"),
     (
         (
             datetime.date.fromisoformat("2026-05-24"),
@@ -142,18 +141,18 @@ def test_task_instance_postpone_invalid_date(
 )
 def test_generate_task_instance_from_template_success(
     task_template,
-    scheduled_day: datetime.date,
+    generate_day: datetime.date,
     now: datetime.datetime,
     expected_scheduled_at: datetime.datetime,
 ):
     instance = TaskGenerationService.generate_from_template(
-        template=task_template, scheduled_day=scheduled_day, now=now
+        template=task_template, day=generate_day, now=now
     )
     assert instance.task_template_id == task_template.id
     assert instance.user_id == task_template.user_id
     assert instance.title == task_template.title
     assert instance.description == task_template.description
-    assert instance.occurrence_date == scheduled_day
+    assert instance.occurrence_date == generate_day
     assert instance.scheduled_at == expected_scheduled_at
     assert instance.created_at == now
     assert not instance.is_completed
@@ -170,7 +169,7 @@ def test_generate_task_instance_from_template_success(
     ),
 )
 @pytest.mark.parametrize(
-    ("scheduled_day", "creation_now"),
+    ("generate_day", "creation_now"),
     (
         (
             datetime.date.fromisoformat("2026-05-24"),  # Sunday
@@ -179,12 +178,12 @@ def test_generate_task_instance_from_template_success(
     ),
 )
 def test_generate_task_instance_from_template_not_scheduled(
-    task_template, scheduled_day, creation_now
+    task_template, generate_day: datetime.date, creation_now: datetime.datetime
 ):
-    with pytest.raises(TaskInstanceNotScheduledException):
-        TaskGenerationService.generate_from_template(
-            template=task_template, scheduled_day=scheduled_day, now=creation_now
-        )
+    task_instance = TaskGenerationService.generate_from_template(
+        template=task_template, day=generate_day, now=creation_now
+    )
+    assert task_instance is None
 
 
 @pytest.mark.parametrize(
@@ -200,7 +199,7 @@ def test_generate_task_instance_from_template_not_scheduled(
 )
 @pytest.mark.parametrize("new_title", ("New Title",))
 @pytest.mark.parametrize(
-    ("scheduled_day", "now"),
+    ("generate_day", "now"),
     (
         (
             datetime.date.fromisoformat("2026-05-24"),
@@ -211,12 +210,12 @@ def test_generate_task_instance_from_template_not_scheduled(
 def test_generate_task_instance_independence(
     task_template: TaskTemplate,
     new_title: str,
-    scheduled_day: datetime.date,
+    generate_day: datetime.date,
     now: datetime.datetime,
 ):
 
     instance = TaskGenerationService.generate_from_template(
-        template=task_template, scheduled_day=scheduled_day, now=now
+        template=task_template, day=generate_day, now=now
     )
 
     # Change template
