@@ -10,10 +10,10 @@ from application.task_template.commands import (
 from domain.task_instance.aggregate import TaskInstance
 from domain.task_instance.service import TaskGenerationService
 from domain.task_template.aggregate import TaskTemplate
-from infrastructure.repositories.memory_task_instance_repository import (
+from infrastructure.memory.repositories import (
     MemoryTaskInstanceRepository,
 )
-from infrastructure.repositories.memory_task_template_repository import (
+from infrastructure.memory.repositories.memory_task_template_repository import (
     MemoryTaskTemplateRepository,
 )
 from tests.factories.task_instance import TaskInstanceFactory

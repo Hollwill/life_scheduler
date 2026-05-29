@@ -11,7 +11,7 @@ from application.task_template.exceptions import TaskTemplateNotFoundException
 from domain.task_template.aggregate import TaskTemplate
 from domain.task_template.entities import DailyTrigger, Trigger
 from domain.task_template.value_objects import Weekday
-from infrastructure.repositories.memory_task_template_repository import (
+from infrastructure.memory.repositories.memory_task_template_repository import (
     MemoryTaskTemplateRepository,
 )
 from tests.factories.trigger import WeeklyTriggerFactory

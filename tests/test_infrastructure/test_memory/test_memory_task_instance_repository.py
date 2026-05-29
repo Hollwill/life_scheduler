@@ -4,7 +4,7 @@ import uuid
 import pytest
 
 from domain.task_instance.aggregate import TaskInstance
-from infrastructure.repositories.memory_task_instance_repository import (
+from infrastructure.memory.repositories import (
     MemoryTaskInstanceRepository,
 )
 from tests.factories.task_instance import TaskInstanceFactory

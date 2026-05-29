@@ -3,7 +3,9 @@ import uuid
 import pytest
 
 from domain.user.aggregate import User
-from infrastructure.repositories.memory_user_repository import MemoryUserRepository
+from infrastructure.memory.repositories.memory_user_repository import (
+    MemoryUserRepository,
+)
 from tests.factories.user import UserFactory
 
 

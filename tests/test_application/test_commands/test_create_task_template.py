@@ -11,10 +11,12 @@ from domain.task_template.aggregate import TaskTemplate
 from domain.task_template.entities import Trigger
 from domain.task_template.value_objects import Weekday
 from domain.user.aggregate import User
-from infrastructure.repositories.memory_task_template_repository import (
+from infrastructure.memory.repositories.memory_task_template_repository import (
     MemoryTaskTemplateRepository,
 )
-from infrastructure.repositories.memory_user_repository import MemoryUserRepository
+from infrastructure.memory.repositories.memory_user_repository import (
+    MemoryUserRepository,
+)
 from tests.factories.trigger import WeeklyTriggerFactory
 from tests.factories.user import UserFactory
 
