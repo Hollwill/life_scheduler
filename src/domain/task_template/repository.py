@@ -16,5 +16,5 @@ class TaskTemplateRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_all_active(self) -> collections.abc.Iterable[TaskTemplate]:
+    async def get_all_active(self) -> collections.abc.Collection[TaskTemplate]:
         pass

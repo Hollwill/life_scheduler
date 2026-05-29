@@ -1,4 +1,6 @@
 import abc
+import collections
+import datetime
 import uuid
 
 from domain.task_instance.aggregate import TaskInstance
@@ -11,4 +13,10 @@ class TaskInstanceRepository(abc.ABC):
 
     @abc.abstractmethod
     async def save(self, task_instance: TaskInstance) -> None:
+        pass
+
+    @abc.abstractmethod
+    async def get_all_by_day(
+        self, day: datetime.date
+    ) -> collections.abc.Collection[TaskInstance]:
         pass

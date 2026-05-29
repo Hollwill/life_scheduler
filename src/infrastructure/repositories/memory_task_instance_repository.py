@@ -1,4 +1,6 @@
+import collections
 import copy
+import datetime
 import uuid
 
 from domain.task_instance.aggregate import TaskInstance
@@ -17,3 +19,12 @@ class MemoryTaskInstanceRepository(TaskInstanceRepository):
 
     async def save(self, task_instance: TaskInstance) -> None:
         self.task_instances[task_instance.id] = copy.deepcopy(task_instance)
+
+    async def get_all_by_day(
+        self, day: datetime.date
+    ) -> collections.abc.Collection[TaskInstance]:
+        return [
+            task_instance
+            for task_instance in self.task_instances.values()
+            if task_instance.occurrence_date == day
+        ]

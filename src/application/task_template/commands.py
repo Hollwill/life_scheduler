@@ -7,6 +7,8 @@ from application.task_template.exceptions import (
     TaskTemplateNotFoundException,
     UserNotFoundException,
 )
+from domain.task_instance.repository import TaskInstanceRepository
+from domain.task_instance.service import TaskGenerationService
 from domain.task_template.aggregate import TaskTemplate
 from domain.task_template.entities import Trigger
 from domain.task_template.repository import TaskTemplateRepository
@@ -84,13 +86,43 @@ class UpdateTaskTemplateHandler(CommandHandler[UpdateTaskTemplateCommand, None])
 
 
 @dataclasses.dataclass
-class GenerateTaskForDayCommand:
+class GenerateTasksForDayCommand:
     day: datetime.date
 
 
-class GenerateTaskForDayHandler(CommandHandler[GenerateTaskForDayCommand, None]):
-    def __init__(self, task_template_repository: TaskTemplateRepository) -> None:
-        self.task_template_repository: TaskTemplateRepository = task_template_repository
+class GenerateTasksForDayHandler(CommandHandler[GenerateTasksForDayCommand, None]):
+    def __init__(
+        self,
+        task_template_repository: TaskTemplateRepository,
+        task_instance_repository: TaskInstanceRepository,
+        task_generation_service: TaskGenerationService,
+        now: datetime.datetime,
+    ) -> None:
+        self.task_template_repository = task_template_repository
+        self.task_instance_repository = task_instance_repository
+        self.task_generation_service = task_generation_service
+        self.now = now
 
-    async def handle(self, command: GenerateTaskForDayCommand) -> None:
-        pass
+    async def handle(self, command: GenerateTasksForDayCommand) -> None:
+
+        task_templates = await self.task_template_repository.get_all_active()
+
+        today_task_instances = await self.task_instance_repository.get_all_by_day(
+            command.day
+        )
+
+        exists_template_ids_for_day = {
+            task_instance.task_template_id for task_instance in today_task_instances
+        }
+
+        for task_template in task_templates:
+            if task_template.id in exists_template_ids_for_day:
+                continue
+
+            task_instance = self.task_generation_service.generate_from_template(
+                task_template, day=command.day, now=self.now
+            )
+            if not task_instance:
+                continue
+
+            await self.task_instance_repository.save(task_instance)

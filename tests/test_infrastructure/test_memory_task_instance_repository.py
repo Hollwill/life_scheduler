@@ -1,3 +1,4 @@
+import datetime
 import uuid
 
 import pytest
@@ -60,3 +61,51 @@ async def test_memory_task_instance_repository_deepcopy_isolation(
     # Check that repo still has the original data
     retrieved_again = await repo.get_by_id(task_instance.id)
     assert retrieved_again.title == task_instance_title
+
+
+@pytest.mark.parametrize(
+    "task_instances",
+    (
+        (
+            TaskInstanceFactory.build(
+                id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+            ),
+            TaskInstanceFactory.build(
+                id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+            ),
+            TaskInstanceFactory.build(
+                id=uuid.UUID("00000000-0000-0000-0000-000000000002"),
+                occurrence_date=datetime.date.fromisoformat("2021-01-11"),
+            ),
+            TaskInstanceFactory.build(
+                id=uuid.UUID("00000000-0000-0000-0000-000000000003"),
+                occurrence_date=datetime.date.fromisoformat("2021-01-09"),
+            ),
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "expected_ids_in_result",
+    (
+        (
+            uuid.UUID("00000000-0000-0000-0000-000000000000"),
+            uuid.UUID("00000000-0000-0000-0000-000000000001"),
+        ),
+    ),
+)
+@pytest.mark.parametrize("search_by_day", (datetime.date.fromisoformat("2021-01-10"),))
+async def test_memory_task_instance_get_all_by_day(
+    task_instances: tuple[TaskInstance, ...],
+    expected_ids_in_result: tuple[str, ...],
+    search_by_day: datetime.date,
+):
+    repo = MemoryTaskInstanceRepository()
+    for task_instance in task_instances:
+        await repo.save(task_instance)
+
+    result = await repo.get_all_by_day(day=search_by_day)
+
+    ids_in_result = {task_instance.id for task_instance in result}
+    assert ids_in_result == set(expected_ids_in_result)
