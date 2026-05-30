@@ -173,8 +173,10 @@ def task_instance_to_orm(task_instance: TaskInstance) -> TaskInstanceModel:
 
 
 def user_from_orm(user_orm: UserModel) -> User:
-    return User(id=user_orm.id, name=user_orm.name)
+    return User(
+        id=user_orm.id, telegram_user_id=user_orm.telegram_user_id, name=user_orm.name
+    )
 
 
 def user_to_orm(user: User) -> UserModel:
-    return UserModel(id=user.id, name=user.name)
+    return UserModel(id=user.id, telegram_user_id=user.telegram_user_id, name=user.name)

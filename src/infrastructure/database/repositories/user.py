@@ -24,6 +24,17 @@ class SqlAlchemyUserRepository(UserRepository):
 
         return user_from_orm(instance)
 
+    async def get_by_telegram_user_id(self, telegram_user_id: uuid.UUID) -> User | None:
+        result = await self.session.execute(
+            select(UserModel).where(UserModel.telegram_user_id == telegram_user_id)
+        )
+        instance = result.scalars().first()
+
+        if instance is None:
+            return None
+
+        return user_from_orm(instance)
+
     async def save(self, user: User) -> None:
         instance = await self.session.get(UserModel, user.id)
 
@@ -32,4 +43,5 @@ class SqlAlchemyUserRepository(UserRepository):
             self.session.add(instance)
             return
 
+        instance.telegram_user_id = user.telegram_user_id
         instance.name = user.name

@@ -1,7 +1,7 @@
 import datetime
 import uuid
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, String
+from sqlalchemy import Boolean, Date, DateTime, Enum, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -93,4 +93,5 @@ class UserModel(Base):
         UUID(as_uuid=True),
         primary_key=True,
     )
+    telegram_user_id: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
     name: Mapped[str | None] = mapped_column(String(255), nullable=True)

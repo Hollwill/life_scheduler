@@ -18,6 +18,7 @@ async def test_memory_user_repository_save_and_get(user: User):
 
     assert retrieved is not None
     assert retrieved.id == user.id
+    assert retrieved.telegram_user_id == user.telegram_user_id
     assert retrieved.name == user.name
     assert retrieved is not user  # Deepcopy check
 

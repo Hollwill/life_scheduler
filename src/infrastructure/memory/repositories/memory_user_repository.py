@@ -15,5 +15,11 @@ class MemoryUserRepository(UserRepository):
             return None
         return copy.deepcopy(user)
 
+    async def get_by_telegram_user_id(self, telegram_user_id: int) -> User | None:
+        for user in self.users.values():
+            if user.telegram_user_id == telegram_user_id:
+                return copy.deepcopy(user)
+        return None
+
     async def save(self, user: User) -> None:
         self.users[user.id] = copy.deepcopy(user)

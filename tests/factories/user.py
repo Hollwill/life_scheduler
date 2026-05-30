@@ -10,4 +10,5 @@ class UserFactory(factory.Factory):
         model = User
 
     id = factory.LazyFunction(uuid.uuid4)
+    telegram_user_id = factory.Sequence(lambda n: n)
     name = factory.Sequence(lambda n: f"User-{n}")
