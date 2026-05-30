@@ -1,25 +1,34 @@
 import asyncio
 import logging
+import os
 import sys
+import uuid
 
 from aiogram import Bot, Dispatcher, html
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
 from aiogram.types import Message
+from dishka.integrations.aiogram import setup_dishka
+from sqlalchemy.ext.asyncio import AsyncEngine
 
-from settings import settings
+from composition.container import container
+from infrastructure.database.init_db import init_db
+from presentation.telegram.middlewares import CurrentUserMiddleware
+from settings import Settings
 
 # Bot token can be obtained via https://t.me/BotFather
-TOKEN = settings.telegram_bot_token
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # All handlers should be attached to the Router (or Dispatcher)
 
 dp = Dispatcher()
 
+dp.message.middleware(CurrentUserMiddleware())
+
 
 @dp.message(CommandStart())
-async def command_start_handler(message: Message) -> None:
+async def command_start_handler(message: Message, user_id: uuid.UUID) -> None:
     """
     This handler receives messages with `/start` command
     """
@@ -28,7 +37,9 @@ async def command_start_handler(message: Message) -> None:
     # and the target chat will be passed to :ref:`aiogram.methods.send_message.SendMessage`
     # method automatically or call API method directly via
     # Bot instance: `bot.send_message(chat_id=message.chat.id, ...)`
-    await message.answer(f"Hello, {html.bold(message.from_user.full_name)}!")
+    await message.answer(
+        f"Hello, {html.bold(message.from_user.full_name)} id={user_id}!"
+    )
 
 
 @dp.message()
@@ -48,7 +59,20 @@ async def echo_handler(message: Message) -> None:
 
 async def main() -> None:
     # Initialize Bot instance with default bot properties which will be passed to all API calls
-    bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    settings = await container.get(Settings)
+    engine = await container.get(AsyncEngine)
+
+    await init_db(engine)  # TODO: Унести инициализацию БД в миграции через alembic
+
+    bot = Bot(
+        token=settings.telegram_bot_token,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
+
+    setup_dishka(
+        container=container,
+        router=dp,
+    )
 
     # And the run events dispatching
     await dp.start_polling(bot)
