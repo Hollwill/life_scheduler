@@ -3,7 +3,11 @@ name = "life_scheduler"
 version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
+    "asyncpg>=0.31.0",
     "pydantic>=2.13.4",
+    "pydantic-settings>=2.14.1",
+    "sqlalchemy[asyncio]>=2.0.50",
+    "testcontainers>=4.14.2",
 ]
 
 [dependency-groups]
@@ -15,6 +19,7 @@ dev = [
     "time-machine[dateutil]>=3.2.0",
     "ruff>=0.15.14",
     "factory-boy>=3.3.3",
+    "isort>=8.0.1",
 ]
 
 [tool.isort]

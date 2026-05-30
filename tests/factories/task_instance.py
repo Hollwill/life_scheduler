@@ -29,7 +29,12 @@ class TaskInstanceFactory(factory.Factory):
         lambda: datetime.date.today() + datetime.timedelta(days=1)
     )
 
-    scheduled_at = factory.LazyFunction(lambda: datetime.time.fromisoformat("09:00"))
+    scheduled_at = factory.LazyFunction(
+        lambda: datetime.datetime.combine(
+            datetime.date.today() + datetime.timedelta(days=1),
+            datetime.time.fromisoformat("09:00"),
+        )
+    )
 
     created_at = factory.LazyFunction(datetime.datetime.now)
 

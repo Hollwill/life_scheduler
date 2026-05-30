@@ -20,6 +20,15 @@ class Trigger(
     def __init__(self, id: uuid.UUID):
         super().__init__(id=id)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Trigger):
+            return NotImplemented
+        return self.get_equality_attributes() == other.get_equality_attributes()
+
+    @abc.abstractmethod
+    def get_equality_attributes(self) -> typing.Iterable[typing.Any]:
+        return self.id, self.type
+
     @abc.abstractmethod
     def occurs_on(self, day: datetime.date) -> bool:
         pass
@@ -42,6 +51,13 @@ class ReminderTimeTrigger(
         super().__init__(id=id)
         self.reminder_time = reminder_time
 
+    @abc.abstractmethod
+    def get_equality_attributes(self) -> typing.Iterable[typing.Any]:
+        return (
+            *super().get_equality_attributes(),
+            self.reminder_time,
+        )
+
     def _calculate_reminder_at(self, day: datetime.date) -> datetime.datetime | None:
         if self.reminder_time is None:
             return None
@@ -62,6 +78,12 @@ class OneTimeTrigger(ReminderTimeTrigger):
         super().__init__(id=id, reminder_time=reminder_time)
         self.occurrence_date = occurrence_date
 
+    def get_equality_attributes(self) -> typing.Iterable[typing.Any]:
+        return (
+            *super().get_equality_attributes(),
+            self.occurrence_date,
+        )
+
     def occurs_on(self, day: datetime.date) -> bool:
         return day == self.occurrence_date
 
@@ -71,6 +93,9 @@ class DailyTrigger(ReminderTimeTrigger):
 
     def __init__(self, id: uuid.UUID, reminder_time: datetime.time | None = None):
         super().__init__(id=id, reminder_time=reminder_time)
+
+    def get_equality_attributes(self) -> typing.Iterable[typing.Any]:
+        return super().get_equality_attributes()
 
     def occurs_on(self, day: datetime.date) -> bool:
         return True
@@ -90,6 +115,12 @@ class WeeklyTrigger(ReminderTimeTrigger):
             raise EmptyWeekdaysException()
         self.weekdays = weekdays
 
+    def get_equality_attributes(self) -> typing.Iterable[typing.Any]:
+        return (
+            *super().get_equality_attributes(),
+            self.weekdays,
+        )
+
     def occurs_on(self, day: datetime.date) -> bool:
         return day.weekday() in self.weekdays
 
@@ -105,6 +136,12 @@ class MonthlyTrigger(ReminderTimeTrigger):
     ):
         super().__init__(id=id, reminder_time=reminder_time)
         self.day_of_month = day_of_month
+
+    def get_equality_attributes(self) -> typing.Iterable[typing.Any]:
+        return (
+            *super().get_equality_attributes(),
+            self.day_of_month,
+        )
 
     def occurs_on(self, day: datetime.date) -> bool:
         return day.day == self.day_of_month.value
@@ -130,6 +167,13 @@ class YearlyTrigger(ReminderTimeTrigger):
             )
         self.month = month
         self.day = day
+
+    def get_equality_attributes(self) -> typing.Iterable[typing.Any]:
+        return (
+            *super().get_equality_attributes(),
+            self.day,
+            self.month,
+        )
 
     def occurs_on(self, day: datetime.date) -> bool:
         return day.month == self.month and day.day == self.day.value
