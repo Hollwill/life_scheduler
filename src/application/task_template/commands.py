@@ -7,10 +7,11 @@ from application.task_template.exceptions import (
     TaskTemplateNotFoundException,
     UserNotFoundException,
 )
+from application.task_template.schemas import TriggerPayload
+from application.task_template.trigger_mapper import TriggerMapper
 from domain.task_instance.repository import TaskInstanceRepository
 from domain.task_instance.service import TaskGenerationService
 from domain.task_template.aggregate import TaskTemplate
-from domain.task_template.entities import Trigger
 from domain.task_template.repository import TaskTemplateRepository
 from domain.user.aggregate import User
 from domain.user.repository import UserRepository
@@ -21,7 +22,7 @@ class CreateTaskTemplateCommand:
     user_id: uuid.UUID
     title: str
     description: str
-    trigger: Trigger
+    trigger_payload: TriggerPayload
     now: datetime.datetime
 
 
@@ -43,7 +44,7 @@ class CreateTaskTemplateHandler(CommandHandler[CreateTaskTemplateCommand, uuid.U
             user_id=user.id,
             title=command.title,
             description=command.description,
-            trigger=command.trigger,
+            trigger=TriggerMapper.to_domain(command.trigger_payload),
             now=command.now,
         )
         await self.task_template_repository.save(task_template)
@@ -55,7 +56,7 @@ class UpdateTaskTemplateCommand:
     task_template_id: uuid.UUID
     title: str
     description: str
-    trigger: Trigger
+    trigger_payload: TriggerPayload
     now: datetime.datetime
 
 
@@ -78,7 +79,7 @@ class UpdateTaskTemplateHandler(CommandHandler[UpdateTaskTemplateCommand, None])
         task_template.edit(
             title=command.title,
             description=command.description,
-            trigger=command.trigger,
+            trigger=TriggerMapper.to_domain(command.trigger_payload),
             now=command.now,
         )
 

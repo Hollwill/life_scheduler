@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from application.task_template.commands import CreateTaskTemplateHandler
 from application.user.commands import GetOrCreateUserHandler
 from domain.task_instance.repository import TaskInstanceRepository
 from domain.task_template.repository import TaskTemplateRepository
@@ -34,6 +35,17 @@ class ApplicationProvider(Provider):
     ) -> GetOrCreateUserHandler:
 
         return GetOrCreateUserHandler(
+            user_repository=user_repository,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def create_task_template_handler(
+        self,
+        task_template_repository: TaskTemplateRepository,
+        user_repository: UserRepository,
+    ) -> CreateTaskTemplateHandler:
+        return CreateTaskTemplateHandler(
+            task_template_repository=task_template_repository,
             user_repository=user_repository,
         )
 

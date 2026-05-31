@@ -1,26 +1,14 @@
-import asyncio
-import logging
-import os
-import sys
 import uuid
 
-from aiogram import Bot, Dispatcher, html
-from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart
+from aiogram import Dispatcher, html
+from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
-from dishka.integrations.aiogram import setup_dishka
-from sqlalchemy.ext.asyncio import AsyncEngine
 
-from composition.container import container
-from infrastructure.database.init_db import init_db
+from application.task_template.commands import (
+    CreateTaskTemplateCommand,
+    CreateTaskTemplateHandler,
+)
 from presentation.telegram.middlewares import CurrentUserMiddleware
-from settings import Settings
-
-# Bot token can be obtained via https://t.me/BotFather
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-
-# All handlers should be attached to the Router (or Dispatcher)
 
 dp = Dispatcher()
 
@@ -29,17 +17,49 @@ dp.message.middleware(CurrentUserMiddleware())
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message, user_id: uuid.UUID) -> None:
-    """
-    This handler receives messages with `/start` command
-    """
-    # Most event objects have aliases for API methods that can be called in events' context
-    # For example if you want to answer to incoming message you can use `message.answer(...)` alias
-    # and the target chat will be passed to :ref:`aiogram.methods.send_message.SendMessage`
-    # method automatically or call API method directly via
-    # Bot instance: `bot.send_message(chat_id=message.chat.id, ...)`
-    await message.answer(
-        f"Hello, {html.bold(message.from_user.full_name)} id={user_id}!"
+    await message.answer(f"""
+        Hello, {html.bold(message.from_user.full_name)}!
+        Your id is {user_id}
+
+        Commands:
+
+        /templates
+        /tasks
+        /create_daily
+        /create_weekly
+        /create_monthly
+        /create_yearly
+        /create_one_time
+        """)
+
+
+@dp.message(Command("create_daily"))
+async def create_daily(
+    message: Message,
+    user_id: uuid.UUID,
+    create_task_template_handler: CreateTaskTemplateHandler,
+):
+    try:
+        _, reminder_time, title = message.text.split(
+            maxsplit=2,
+        )
+    except ValueError:
+        await message.answer("Usage:\n/create_daily 09:00 Drink water")
+        return
+
+    await create_task_template_handler.handle(
+        CreateTaskTemplateCommand(
+            user_id=user_id,
+            title=title,
+            description=None,
+            trigger_payload={
+                "type": "DAILY",
+                "reminder_time": reminder_time,
+            },
+        )
     )
+
+    await message.answer(f'Daily task "{title}" created.')
 
 
 @dp.message()
@@ -55,29 +75,3 @@ async def echo_handler(message: Message) -> None:
     except TypeError:
         # But not all the types is supported to be copied so need to handle it
         await message.answer("Nice try!")
-
-
-async def main() -> None:
-    # Initialize Bot instance with default bot properties which will be passed to all API calls
-    settings = await container.get(Settings)
-    engine = await container.get(AsyncEngine)
-
-    await init_db(engine)  # TODO: Унести инициализацию БД в миграции через alembic
-
-    bot = Bot(
-        token=settings.telegram_bot_token,
-        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-    )
-
-    setup_dishka(
-        container=container,
-        router=dp,
-    )
-
-    # And the run events dispatching
-    await dp.start_polling(bot)
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    asyncio.run(main())

@@ -20,14 +20,12 @@ from domain.task_template.value_objects import DayOfMonth, Month, Weekday
 
 
 class TriggerMapper:
-
     @staticmethod
     def to_domain(
         payload: TriggerPayload,
     ) -> Trigger:
 
         match payload:
-
             case DailyTriggerPayload():
                 return DailyTrigger(
                     id=uuid.uuid4(),
@@ -63,4 +61,4 @@ class TriggerMapper:
                     reminder_time=payload.reminder_time,
                 )
             case _:
-                raise AssertionError("Unreachable")
+                raise AssertionError("Trigger type not supported")
