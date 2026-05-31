@@ -1,4 +1,3 @@
-import datetime
 import typing
 import uuid
 
@@ -9,14 +8,6 @@ from infrastructure.memory.repositories.memory_task_template_repository import (
     MemoryTaskTemplateRepository,
 )
 from tests.factories.task_template import TaskTemplateFactory
-
-
-class TaskTemplateRepoTestCase(typing.NamedTuple):
-    title: str
-    description: str
-    is_active: bool
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
 
 
 @pytest.mark.parametrize("task_template", (TaskTemplateFactory.build(),))

@@ -32,13 +32,14 @@ from tests.factories.trigger import WeeklyTriggerFactory
     (TaskTemplateFactory.build(),),
 )
 @pytest.mark.parametrize(
-    ("new_title", "new_description"), ((("New Title", "New Description"),))
+    ("new_title", "new_description"),
+    ((("New Title", "New Description"), ("New Title", None))),
 )
 async def test_update_task_template_handler_updates_and_saves_template(
     task_template: TaskTemplate,
     new_trigger_payload: WeeklyTriggerPayload,
     new_title: str,
-    new_description: str,
+    new_description: str | None,
 ):
     task_template_repository = MemoryTaskTemplateRepository()
 

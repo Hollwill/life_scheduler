@@ -16,11 +16,6 @@ from tests.factories.task_template import TaskTemplateFactory
 from tests.factories.trigger import DailyTriggerFactory, WeeklyTriggerFactory
 
 
-class TaskInstanceTestCase(typing.NamedTuple):
-    title: str
-    description: str
-
-
 @pytest.mark.parametrize(
     "task_instance", (TaskInstanceFactory.build(status=TaskStatus.PENDING),)
 )
@@ -224,3 +219,45 @@ def test_generate_task_instance_independence(
 
     assert instance.title == initial_title
     assert task_template.title == new_title
+
+
+@pytest.mark.parametrize(
+    "task_template",
+    (TaskTemplateFactory.build(),),
+)
+@pytest.mark.parametrize(
+    ("updated_field", "new_value", "check_attribute", "non_changed_attributes"),
+    (
+        (
+            "title",
+            "new_title",
+            "title",
+            ("description", "trigger"),
+        ),
+        (
+            "description",
+            "new_description",
+            "description",
+            ("title", "trigger"),
+        ),
+    ),
+)
+def test_task_template_edit(
+    task_template: TaskTemplate,
+    updated_field: str,
+    new_value: typing.Any,
+    check_attribute: str,
+    non_changed_attributes: tuple[str, ...],
+    now: datetime.datetime,
+):
+    original_values = {
+        attr: getattr(task_template, attr)
+        for attr in (check_attribute, *non_changed_attributes)
+    }
+
+    task_template.edit(**{updated_field: new_value}, now=now)
+
+    assert getattr(task_template, check_attribute) == new_value
+
+    for attr in non_changed_attributes:
+        assert getattr(task_template, attr) == original_values[attr]

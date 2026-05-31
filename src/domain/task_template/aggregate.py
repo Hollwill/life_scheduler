@@ -5,6 +5,8 @@ import uuid
 from domain.common import AggregateRoot
 from domain.task_template.entities import Trigger
 
+EMPTY = object()
+
 
 class TaskTemplate(AggregateRoot[uuid.UUID]):
     def __init__(
@@ -12,7 +14,7 @@ class TaskTemplate(AggregateRoot[uuid.UUID]):
         id: uuid.UUID,
         user_id: uuid.UUID,
         title: str,
-        description: str,
+        description: str | None,
         trigger: Trigger,
         is_active: bool,
         created_at: datetime.datetime,
@@ -21,7 +23,7 @@ class TaskTemplate(AggregateRoot[uuid.UUID]):
         super().__init__(id)
         self.user_id: uuid.UUID = user_id
         self.title: str = title
-        self.description: str = description
+        self.description: str | None = description
         self.trigger: Trigger = trigger
         self.is_active: bool = is_active
         self.created_at: datetime.datetime = created_at
@@ -32,7 +34,7 @@ class TaskTemplate(AggregateRoot[uuid.UUID]):
         cls,
         user_id: uuid.UUID,
         title: str,
-        description: str,
+        description: str | None,
         trigger: Trigger,
         now: datetime.datetime,
     ) -> typing.Self:
@@ -57,7 +59,9 @@ class TaskTemplate(AggregateRoot[uuid.UUID]):
         self.title = title
         self.updated_at = now
 
-    def change_description(self, description: str, now: datetime.datetime) -> None:
+    def change_description(
+        self, description: str | None, now: datetime.datetime
+    ) -> None:
         self.description = description
         self.updated_at = now
 
@@ -68,15 +72,18 @@ class TaskTemplate(AggregateRoot[uuid.UUID]):
     def edit(
         self,
         now: datetime.datetime,
-        title: str | None = None,
-        description: str | None = None,
-        trigger: Trigger | None = None,
+        title: str | object = EMPTY,
+        description: str | None | object = EMPTY,
+        trigger: Trigger | object = EMPTY,
     ) -> None:
-        if title is not None:
+        if title is not EMPTY:
+            assert isinstance(title, str)
             self.change_title(title, now)
-        if description is not None:
+        if description is not EMPTY:
+            assert isinstance(description, str | None)
             self.change_description(description, now)
-        if trigger is not None:
+        if trigger is not EMPTY:
+            assert isinstance(trigger, Trigger)
             self.replace_trigger(trigger, now)
 
     def activate(self, now: datetime.datetime) -> None:

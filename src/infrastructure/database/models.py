@@ -17,7 +17,7 @@ class TaskTemplateModel(Base):
         UUID(as_uuid=True), nullable=False, index=True
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
     trigger: Mapped[dict] = mapped_column(JSONB, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
@@ -53,9 +53,9 @@ class TaskInstanceModel(Base):
         nullable=False,
     )
 
-    description: Mapped[str] = mapped_column(
+    description: Mapped[str | None] = mapped_column(
         String,
-        nullable=False,
+        nullable=True,
     )
 
     occurrence_date: Mapped[datetime.date] = mapped_column(

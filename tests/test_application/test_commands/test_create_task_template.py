@@ -45,7 +45,7 @@ async def test_create_task_template_handler_creates_and_saves_template(
     user: User,
     trigger_payload: WeeklyTriggerPayload,
     task_template_title: str,
-    task_template_description: str,
+    task_template_description: str | None,
 ):
     task_template_repository = MemoryTaskTemplateRepository()
     user_repository = MemoryUserRepository()
@@ -100,7 +100,7 @@ async def test_create_task_template_user_not_found(
     user: User,
     trigger_payload: TriggerPayload,
     task_template_title: str,
-    task_template_description: str,
+    task_template_description: str | None,
 ):
     task_template_repository = MemoryTaskTemplateRepository()
     user_repository = MemoryUserRepository()

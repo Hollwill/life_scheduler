@@ -21,7 +21,7 @@ from domain.user.repository import UserRepository
 class CreateTaskTemplateCommand:
     user_id: uuid.UUID
     title: str
-    description: str
+    description: str | None
     trigger_payload: TriggerPayload
     now: datetime.datetime
 
@@ -55,7 +55,7 @@ class CreateTaskTemplateHandler(CommandHandler[CreateTaskTemplateCommand, uuid.U
 class UpdateTaskTemplateCommand:
     task_template_id: uuid.UUID
     title: str
-    description: str
+    description: str | None
     trigger_payload: TriggerPayload
     now: datetime.datetime
 
