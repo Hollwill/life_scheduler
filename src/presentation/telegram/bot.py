@@ -10,7 +10,10 @@ from application.task_template.commands import (
     CreateTaskTemplateHandler,
 )
 from presentation.telegram.decorators import parse_error_handle
-from presentation.telegram.middlewares import CurrentUserMiddleware
+from presentation.telegram.middlewares import (
+    CommonErrorMiddleware,
+    CurrentUserMiddleware,
+)
 from presentation.telegram.parsers import (
     parse_create_daily,
     parse_create_monthly,
@@ -22,6 +25,8 @@ from presentation.telegram.parsers import (
 dp = Dispatcher()
 
 dp.message.middleware(CurrentUserMiddleware())
+dp.message.middleware(CommonErrorMiddleware())
+
 # TODO: Написать еще middleware для перехвата исключений и ответа "что-то пошло не так".
 # TODO: В идеале еще добавлять что-то вроде x-request-id чтобы по логам легче искать было.
 
