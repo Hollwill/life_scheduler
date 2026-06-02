@@ -32,9 +32,6 @@ dp = Dispatcher()
 dp.message.middleware(CurrentUserMiddleware())
 dp.message.middleware(CommonErrorMiddleware())
 
-# TODO: Написать еще middleware для перехвата исключений и ответа "что-то пошло не так".
-# TODO: В идеале еще добавлять что-то вроде x-request-id чтобы по логам легче искать было.
-
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message, user_id: uuid.UUID) -> None:
