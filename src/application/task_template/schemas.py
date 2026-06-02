@@ -1,42 +1,41 @@
 import datetime
 import typing
+import uuid
 
 from pydantic import BaseModel, Field, TypeAdapter
 
 
-class DailyTriggerPayload(BaseModel):
-    type: typing.Literal["DAILY"]
-
+class ReminderTimeTriggerPayload(BaseModel):
     reminder_time: datetime.time | None = None
 
 
-class OneTimeTriggerPayload(BaseModel):
-    type: typing.Literal["ONE_TIME"]
+class DailyTriggerPayload(ReminderTimeTriggerPayload):
+    type: typing.Literal["DAILY"] = "DAILY"
+
+
+class OneTimeTriggerPayload(ReminderTimeTriggerPayload):
+    type: typing.Literal["ONE_TIME"] = "ONE_TIME"
 
     occurrence_date: datetime.date
-    reminder_time: datetime.time | None = None
 
 
-class WeeklyTriggerPayload(BaseModel):
-    type: typing.Literal["WEEKLY"]
+class WeeklyTriggerPayload(ReminderTimeTriggerPayload):
+    type: typing.Literal["WEEKLY"] = "WEEKLY"
 
     weekdays: list[int]
-    reminder_time: datetime.time | None = None
 
 
-class MonthlyTriggerPayload(BaseModel):
-    type: typing.Literal["MONTHLY"]
+class MonthlyTriggerPayload(ReminderTimeTriggerPayload):
+    type: typing.Literal["MONTHLY"] = "MONTHLY"
 
     day_of_month: int
-    reminder_time: datetime.time | None = None
 
 
-class YearlyTriggerPayload(BaseModel):
-    type: typing.Literal["YEARLY"]
+class YearlyTriggerPayload(ReminderTimeTriggerPayload):
+    type: typing.Literal["YEARLY"] = "YEARLY"
 
     month: int
     day: int
-    reminder_time: datetime.time | None = None
 
 
 TriggerPayload: typing.TypeAlias = typing.Annotated[
@@ -51,3 +50,10 @@ TriggerPayload: typing.TypeAlias = typing.Annotated[
 ]
 
 trigger_payload_adapter = TypeAdapter(TriggerPayload)
+
+
+class TaskTemplateResponse(BaseModel):
+    id: uuid.UUID
+    title: str
+    description: str | None
+    trigger: TriggerPayload

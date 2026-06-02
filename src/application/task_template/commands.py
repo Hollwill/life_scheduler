@@ -2,7 +2,7 @@ import dataclasses
 import datetime
 import uuid
 
-from application.common.commands import CommandHandler
+from application.common.base import CommandHandler
 from application.task_template.exceptions import (
     TaskTemplateNotFoundException,
     UserNotFoundException,

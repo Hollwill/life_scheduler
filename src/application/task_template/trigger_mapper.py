@@ -62,3 +62,41 @@ class TriggerMapper:
                 )
             case _:
                 raise AssertionError("Trigger type not supported")
+
+    @staticmethod
+    def to_model(
+        trigger: Trigger,
+    ) -> TriggerPayload:
+
+        match trigger:
+            case DailyTrigger():
+                return DailyTriggerPayload(
+                    reminder_time=trigger.reminder_time,
+                )
+
+            case OneTimeTrigger():
+                return OneTimeTriggerPayload(
+                    occurrence_date=trigger.occurrence_date,
+                    reminder_time=trigger.reminder_time,
+                )
+
+            case WeeklyTrigger():
+                return WeeklyTriggerPayload(
+                    weekdays=[int(day) for day in trigger.weekdays],
+                    reminder_time=trigger.reminder_time,
+                )
+
+            case MonthlyTrigger():
+                return MonthlyTriggerPayload(
+                    day_of_month=trigger.day_of_month.value,
+                    reminder_time=trigger.reminder_time,
+                )
+
+            case YearlyTrigger():
+                return YearlyTriggerPayload(
+                    month=int(trigger.month),
+                    day=trigger.day.value,
+                    reminder_time=trigger.reminder_time,
+                )
+            case _:
+                raise AssertionError("Trigger type not supported")

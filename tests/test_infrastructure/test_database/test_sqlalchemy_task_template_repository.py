@@ -53,6 +53,58 @@ async def test_get_task_template_by_unknown_id_returns_none(
     assert loaded is None
 
 
+@pytest.mark.parametrize(
+    "user_id", (uuid.UUID("00000000-0000-0000-0000-000000000000"),)
+)
+@pytest.mark.parametrize(
+    (
+        "task_template",
+        "should_return",
+    ),
+    (
+        (
+            TaskTemplateFactory.build(
+                user_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+                is_active=True,
+            ),
+            True,
+        ),
+        (
+            TaskTemplateFactory.build(
+                user_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+                is_active=False,
+            ),
+            False,
+        ),
+        (
+            TaskTemplateFactory.build(
+                user_id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
+                is_active=True,
+            ),
+            False,
+        ),
+    ),
+)
+async def test_get_all_active_by_user(
+    task_template_database_repository: SqlAlchemyTaskTemplateRepository,
+    user_id: uuid.UUID,
+    task_template: TaskTemplate,
+    should_return: bool,
+):
+    await task_template_database_repository.save(
+        task_template,
+    )
+    templates = await task_template_database_repository.get_all_active_by_user(
+        user_id=user_id
+    )
+
+    if should_return:
+        assert len(templates) == 1
+        assert next(iter(templates)).id == task_template.id
+    else:
+        assert len(templates) == 0
+
+
 async def test_get_all_active_returns_only_active_templates(
     task_template_database_repository: SqlAlchemyTaskTemplateRepository,
 ):

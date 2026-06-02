@@ -1,7 +1,7 @@
 import dataclasses
 import uuid
 
-from application.common.commands import CommandHandler
+from application.common.base import CommandHandler
 from domain.user.aggregate import User
 from domain.user.repository import UserRepository
 

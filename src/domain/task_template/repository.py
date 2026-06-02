@@ -16,5 +16,11 @@ class TaskTemplateRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
+    async def get_all_active_by_user(
+        self, user_id: uuid.UUID
+    ) -> collections.abc.Collection[TaskTemplate]:
+        pass
+
+    @abc.abstractmethod
     async def get_all_active(self) -> collections.abc.Collection[TaskTemplate]:
         pass

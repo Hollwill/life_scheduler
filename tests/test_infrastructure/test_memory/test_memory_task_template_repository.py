@@ -62,6 +62,56 @@ async def test_memory_task_template_repository_deepcopy_isolation(
 
 
 @pytest.mark.parametrize(
+    "user_id", (uuid.UUID("00000000-0000-0000-0000-000000000000"),)
+)
+@pytest.mark.parametrize(
+    (
+        "task_template",
+        "should_return",
+    ),
+    (
+        (
+            TaskTemplateFactory.build(
+                user_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+                is_active=True,
+            ),
+            True,
+        ),
+        (
+            TaskTemplateFactory.build(
+                user_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+                is_active=False,
+            ),
+            False,
+        ),
+        (
+            TaskTemplateFactory.build(
+                user_id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
+                is_active=True,
+            ),
+            False,
+        ),
+    ),
+)
+async def test_memory_task_template_repository_get_all_active_by_user(
+    user_id: uuid.UUID,
+    task_template: TaskTemplate,
+    should_return: bool,
+):
+    repo = MemoryTaskTemplateRepository()
+    await repo.save(
+        task_template,
+    )
+    templates = await repo.get_all_active_by_user(user_id=user_id)
+
+    if should_return:
+        assert len(templates) == 1
+        assert next(iter(templates)).id == task_template.id
+    else:
+        assert len(templates) == 0
+
+
+@pytest.mark.parametrize(
     "task_templates",
     (
         (

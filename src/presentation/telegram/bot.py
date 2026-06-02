@@ -9,6 +9,10 @@ from dishka.integrations.aiogram import FromDishka, inject
 from application.task_template.commands import (
     CreateTaskTemplateHandler,
 )
+from application.task_template.queries import (
+    GetTaskTemplatesHandler,
+    GetTaskTemplatesQuery,
+)
 from presentation.telegram.decorators import parse_error_handle
 from presentation.telegram.middlewares import (
     CommonErrorMiddleware,
@@ -21,6 +25,7 @@ from presentation.telegram.parsers import (
     parse_create_weekly,
     parse_create_yearly,
 )
+from presentation.telegram.renderers import render_task_templates
 
 dp = Dispatcher()
 
@@ -47,6 +52,21 @@ async def command_start_handler(message: Message, user_id: uuid.UUID) -> None:
         /create_yearly
         /create_one_time
         """)
+
+
+@dp.message(Command("templates"))
+@inject
+async def templates(
+    message: Message,
+    user_id: uuid.UUID,
+    get_task_templates_handler: FromDishka[GetTaskTemplatesHandler],
+):
+
+    task_templates = await get_task_templates_handler.handle(
+        query=GetTaskTemplatesQuery(user_id=user_id),
+    )
+
+    await message.answer(render_task_templates(task_templates=task_templates))
 
 
 @dp.message(Command("create_daily"))

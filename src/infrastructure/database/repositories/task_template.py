@@ -55,6 +55,17 @@ class SqlAlchemyTaskTemplateRepository(TaskTemplateRepository):
         instance.created_at = task_template.created_at
         instance.updated_at = task_template.updated_at
 
+    async def get_all_active_by_user(
+        self, user_id: uuid.UUID
+    ) -> collections.abc.Collection[TaskTemplate]:
+        stmt = select(TaskTemplateModel).where(
+            TaskTemplateModel.is_active.is_(True), TaskTemplateModel.user_id == user_id
+        )
+
+        result = await self.session.execute(stmt)
+
+        return [task_template_from_orm(orm) for orm in result.scalars()]
+
     async def get_all_active(
         self,
     ) -> collections.abc.Collection[TaskTemplate]:

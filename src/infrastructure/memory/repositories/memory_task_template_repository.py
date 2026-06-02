@@ -20,6 +20,15 @@ class MemoryTaskTemplateRepository(TaskTemplateRepository):
     async def save(self, task_template: TaskTemplate) -> None:
         self.task_templates[task_template.id] = copy.deepcopy(task_template)
 
+    async def get_all_active_by_user(
+        self, user_id: uuid.UUID
+    ) -> collections.abc.Collection[TaskTemplate]:
+        return tuple(
+            task_template
+            for task_template in self.task_templates.values()
+            if task_template.is_active and task_template.user_id == user_id
+        )
+
     async def get_all_active(self) -> collections.abc.Collection[TaskTemplate]:
         return tuple(
             task_template
