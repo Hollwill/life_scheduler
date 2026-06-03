@@ -15,8 +15,12 @@ from settings import Settings
 
 
 async def main() -> None:
-    # Initialize Bot instance with default bot properties which will be passed to all API calls
+
     settings = await container.get(Settings)
+
+    if not settings.telegram_bot_token:
+        raise ValueError("Telegram bot token is not set")
+
     engine = await container.get(AsyncEngine)
 
     await init_db(engine)  # TODO: Унести инициализацию БД в миграции через alembic

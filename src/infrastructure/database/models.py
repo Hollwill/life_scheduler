@@ -1,7 +1,7 @@
 import datetime
 import uuid
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, Integer, String
+from sqlalchemy import Boolean, Date, DateTime, Enum, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -83,6 +83,11 @@ class TaskInstanceModel(Base):
     postpone_reason: Mapped[str | None] = mapped_column(
         String,
         nullable=True,
+    )
+    __table_args__ = (
+        UniqueConstraint(
+            "task_template_id", "occurrence_date", name="uq_task_template_per_day"
+        ),
     )
 
 

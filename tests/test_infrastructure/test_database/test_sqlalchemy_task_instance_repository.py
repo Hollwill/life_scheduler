@@ -2,6 +2,8 @@ import datetime
 import uuid
 
 import pytest
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.task_instance.aggregate import TaskInstance
 from infrastructure.database.repositories.task_instance import (
@@ -27,6 +29,40 @@ async def test_save_task_instance(
     assert loaded.id == task_instance.id
     assert loaded.title == task_instance.title
     assert loaded.description == task_instance.description
+
+
+@pytest.mark.parametrize(
+    ("original_task_instance", "duplicated_task_instance"),
+    (
+        (
+            TaskInstanceFactory.build(
+                id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+                task_template_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+            ),
+            TaskInstanceFactory.build(
+                id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
+                task_template_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+            ),
+        ),
+    ),
+)
+async def test_duplicate_task_instance_error(
+    task_instance_database_repository: SqlAlchemyTaskInstanceRepository,
+    original_task_instance: TaskInstance,
+    duplicated_task_instance: TaskInstance,
+    session: AsyncSession,
+):
+    await task_instance_database_repository.save(
+        original_task_instance,
+    )
+
+    with pytest.raises(IntegrityError):
+        await task_instance_database_repository.save(
+            duplicated_task_instance,
+        )
+        await session.flush()
 
 
 async def test_get_task_instance_by_unknown_id_returns_none(

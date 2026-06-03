@@ -3,6 +3,7 @@ from dishka import make_async_container
 from composition.providers import (
     ApplicationProvider,
     DatabaseProvider,
+    DomainProvider,
     RepositoryProvider,
     SettingsProvider,
 )
@@ -12,4 +13,5 @@ container = make_async_container(
     DatabaseProvider(),
     RepositoryProvider(),
     ApplicationProvider(),
+    DomainProvider(),
 )

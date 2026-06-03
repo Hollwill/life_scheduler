@@ -4,4 +4,4 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     database_url: PostgresDsn
-    telegram_bot_token: str
+    telegram_bot_token: str | None = None

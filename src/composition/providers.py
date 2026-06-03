@@ -12,6 +12,7 @@ from application.task_template.commands import CreateTaskTemplateHandler
 from application.task_template.queries import GetTaskTemplatesHandler
 from application.user.commands import GetOrCreateUserHandler
 from domain.task_instance.repository import TaskInstanceRepository
+from domain.task_instance.service import TaskGenerationService
 from domain.task_template.repository import TaskTemplateRepository
 from domain.user.repository import (
     UserRepository,
@@ -26,6 +27,14 @@ from infrastructure.database.repositories.user import (
     SqlAlchemyUserRepository,
 )
 from settings import Settings
+
+
+class DomainProvider(Provider):
+    @provide(scope=Scope.REQUEST)
+    def task_generation_service_provider(
+        self,
+    ) -> TaskGenerationService:
+        return TaskGenerationService()
 
 
 class ApplicationProvider(Provider):
