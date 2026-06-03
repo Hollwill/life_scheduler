@@ -3,6 +3,7 @@ import uuid
 
 import pytest
 
+from application.task_instance.schemas import TaskInstanceResponse
 from application.task_template.schemas import (
     DailyTriggerPayload,
     MonthlyTriggerPayload,
@@ -12,7 +13,7 @@ from application.task_template.schemas import (
     WeeklyTriggerPayload,
     YearlyTriggerPayload,
 )
-from presentation.telegram.renderers import render_task_templates
+from presentation.telegram.renderers import render_task_instances, render_task_templates
 
 
 def test_render_task_templates_empty() -> None:
@@ -165,4 +166,159 @@ def test_render_task_templates_multiple_templates(
     result = render_task_templates(task_template_responses)
 
     for expected_part in expected_task_template_parts:
+        assert expected_part in result
+
+
+def test_render_task_instances_empty() -> None:
+    assert render_task_instances([]) == "📋 Tasks\n\nNo tasks found."
+
+
+@pytest.mark.parametrize(
+    ("task_instance_id", "task_instance_title"),
+    (
+        (
+            uuid.UUID("00000000-0000-0000-0000-000000000001"),
+            "Drink water",
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "expected_task_instance_parts",
+    (
+        (
+            "📋 Tasks",
+            "#00000000",
+            "Drink water",
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    (
+        "occurrence_date",
+        "scheduled_at",
+        "status",
+        "expected_status_parts",
+    ),
+    (
+        (
+            datetime.date.fromisoformat("2026-06-10"),
+            None,
+            "CREATED",
+            (
+                "📅 2026-06-10",
+                "✅ CREATED",
+            ),
+        ),
+        (
+            datetime.date.fromisoformat("2026-06-10"),
+            datetime.datetime.fromisoformat("2026-06-10T09:00:00"),
+            "COMPLETED",
+            (
+                "📅 2026-06-10",
+                "⏰ 09:00",
+                "✅ COMPLETED",
+            ),
+        ),
+    ),
+)
+def test_render_task_instances_status_and_schedule(
+    task_instance_id: uuid.UUID,
+    task_instance_title: str,
+    occurrence_date: datetime.date,
+    scheduled_at: datetime.datetime | None,
+    status: str,
+    expected_task_instance_parts: tuple[str, ...],
+    expected_status_parts: tuple[str, ...],
+) -> None:
+    task_instance = TaskInstanceResponse(
+        id=task_instance_id,
+        title=task_instance_title,
+        description=None,
+        occurrence_date=occurrence_date,
+        scheduled_at=scheduled_at,
+        status=status,
+    )
+
+    result = render_task_instances([task_instance])
+
+    for expected_part in (
+        *expected_task_instance_parts,
+        *expected_status_parts,
+    ):
+        assert expected_part in result
+
+
+@pytest.mark.parametrize(
+    "expected_task_instance_parts",
+    (
+        (
+            "Drink water",
+            "📝 2 liters per day",
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "task_instance_response",
+    (
+        TaskInstanceResponse(
+            id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
+            title="Drink water",
+            description="2 liters per day",
+            occurrence_date=datetime.date.fromisoformat("2026-06-10"),
+            scheduled_at=None,
+            status="CREATED",
+        ),
+    ),
+)
+def test_render_task_instances_with_description(
+    task_instance_response: TaskInstanceResponse,
+    expected_task_instance_parts: tuple[str, ...],
+) -> None:
+    result = render_task_instances([task_instance_response])
+
+    for expected_part in expected_task_instance_parts:
+        assert expected_part in result
+
+
+@pytest.mark.parametrize(
+    "expected_task_instance_parts",
+    (
+        (
+            "Drink water",
+            "Workout",
+            "#00000001",
+            "#00000002",
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "task_instance_responses",
+    (
+        (
+            TaskInstanceResponse(
+                id=uuid.UUID("00000001-0000-0000-0000-000000000001"),
+                title="Drink water",
+                description=None,
+                occurrence_date=datetime.date.fromisoformat("2026-06-10"),
+                scheduled_at=None,
+                status="CREATED",
+            ),
+            TaskInstanceResponse(
+                id=uuid.UUID("00000002-0000-0000-0000-000000000002"),
+                title="Workout",
+                description=None,
+                occurrence_date=datetime.date.fromisoformat("2026-06-10"),
+                scheduled_at=None,
+                status="COMPLETED",
+            ),
+        ),
+    ),
+)
+def test_render_task_instances_multiple_instances(
+    expected_task_instance_parts: tuple[str, ...],
+    task_instance_responses: tuple[TaskInstanceResponse, ...],
+) -> None:
+    result = render_task_instances(task_instance_responses)
+
+    for expected_part in expected_task_instance_parts:
         assert expected_part in result

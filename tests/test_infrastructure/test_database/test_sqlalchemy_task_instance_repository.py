@@ -113,3 +113,59 @@ async def test_get_all_by_day(
 
     assert len(instances) == 1
     assert next(iter(instances)).id == (matching_task_instance.id)
+
+
+@pytest.mark.parametrize(
+    "user_id",
+    (
+        uuid.UUID(
+            "00000000-0000-0000-0000-000000000000",
+        ),
+    ),
+)
+@pytest.mark.parametrize("target_day", (datetime.date.fromisoformat("2026-05-30"),))
+@pytest.mark.parametrize(
+    "matching_task_instance",
+    (
+        TaskInstanceFactory.build(
+            user_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+            occurrence_date=datetime.date.fromisoformat("2026-05-30"),
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "other_task_instance",
+    (
+        TaskInstanceFactory.build(
+            user_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+            occurrence_date=datetime.date.fromisoformat("2026-05-31"),
+        ),
+        TaskInstanceFactory.build(
+            user_id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
+            occurrence_date=datetime.date.fromisoformat("2026-05-30"),
+        ),
+    ),
+)
+async def test_get_all_by_user_per_day(
+    task_instance_database_repository: SqlAlchemyTaskInstanceRepository,
+    user_id: uuid.UUID,
+    target_day: datetime.date,
+    matching_task_instance: TaskInstance,
+    other_task_instance: TaskInstance,
+):
+
+    await task_instance_database_repository.save(
+        matching_task_instance,
+    )
+
+    await task_instance_database_repository.save(
+        other_task_instance,
+    )
+
+    instances = await task_instance_database_repository.get_all_by_user_per_day(
+        user_id,
+        target_day,
+    )
+
+    assert len(instances) == 1
+    assert next(iter(instances)).id == (matching_task_instance.id)

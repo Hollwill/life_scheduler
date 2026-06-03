@@ -28,3 +28,12 @@ class MemoryTaskInstanceRepository(TaskInstanceRepository):
             for task_instance in self.task_instances.values()
             if task_instance.occurrence_date == day
         ]
+
+    async def get_all_by_user_per_day(
+        self, user_id: uuid.UUID, day: datetime.date
+    ) -> collections.abc.Collection[TaskInstance]:
+        return [
+            task_instance
+            for task_instance in self.task_instances.values()
+            if task_instance.occurrence_date == day and task_instance.user_id == user_id
+        ]

@@ -6,6 +6,10 @@ from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
+from application.task_instance.queries import (
+    GetTaskInstancesHandler,
+    GetTaskInstancesQuery,
+)
 from application.task_template.commands import (
     CreateTaskTemplateHandler,
 )
@@ -25,7 +29,7 @@ from presentation.telegram.parsers import (
     parse_create_weekly,
     parse_create_yearly,
 )
-from presentation.telegram.renderers import render_task_templates
+from presentation.telegram.renderers import render_task_instances, render_task_templates
 
 dp = Dispatcher()
 
@@ -64,6 +68,23 @@ async def templates(
     )
 
     await message.answer(render_task_templates(task_templates=task_templates))
+
+
+@dp.message(Command("tasks"))
+@inject
+async def tasks(
+    message: Message,
+    user_id: uuid.UUID,
+    get_task_instances_handler: FromDishka[GetTaskInstancesHandler],
+):
+    task_instances = await get_task_instances_handler.handle(
+        query=GetTaskInstancesQuery(
+            user_id=user_id,
+            day=datetime.datetime.now(tz=datetime.UTC).date(),
+        ),
+    )
+
+    await message.answer(render_task_instances(task_instances))
 
 
 @dp.message(Command("create_daily"))

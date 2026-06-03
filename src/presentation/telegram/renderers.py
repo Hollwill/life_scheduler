@@ -1,6 +1,7 @@
 import calendar
 from typing import Iterable
 
+from application.task_instance.schemas import TaskInstanceResponse
 from application.task_template.schemas import (
     DailyTriggerPayload,
     MonthlyTriggerPayload,
@@ -66,3 +67,41 @@ def render_task_templates(task_templates: Iterable[TaskTemplateResponse]) -> str
         _render_task_template(task_template) for task_template in task_templates
     ]
     return "\n\n".join((header, *rendered_task_templates))
+
+
+def _render_task_instance(task_instance: TaskInstanceResponse) -> str:
+    parts = [
+        f"#{str(task_instance.id)[:8]}",
+        task_instance.title,
+    ]
+
+    if task_instance.description:
+        parts.append(f"📝 {task_instance.description}")
+
+    parts.append(f"📅 {task_instance.occurrence_date.isoformat()}")
+
+    if task_instance.scheduled_at:
+        parts.append(
+            f"⏰ {task_instance.scheduled_at.time().isoformat(timespec='minutes')}"
+        )
+
+    parts.append(f"✅ {task_instance.status}")
+
+    return "\n".join(parts)
+
+
+def render_task_instances(
+    task_instances: Iterable[TaskInstanceResponse],
+) -> str:
+    header = "📋 Tasks"
+
+    task_instances = list(task_instances)
+
+    if not task_instances:
+        return f"{header}\n\nNo tasks found."
+
+    rendered = [
+        _render_task_instance(task_instance) for task_instance in task_instances
+    ]
+
+    return "\n\n".join((header, *rendered))

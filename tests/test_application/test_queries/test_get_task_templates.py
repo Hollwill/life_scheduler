@@ -40,22 +40,20 @@ from tests.factories.trigger import DailyTriggerFactory
                 ),
             ],
         ),
-        # (
-        #         TaskTemplateFactory.build(
-        #             user_id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
-        #             is_active=True,
-        #         ),
-        #         [
-        #         ],
-        # ),
-        # (
-        #         TaskTemplateFactory.build(
-        #             user_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
-        #             is_active=False,
-        #         ),
-        #         [
-        #         ],
-        # ),
+        (
+            TaskTemplateFactory.build(
+                user_id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
+                is_active=True,
+            ),
+            [],
+        ),
+        (
+            TaskTemplateFactory.build(
+                user_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+                is_active=False,
+            ),
+            [],
+        ),
     ),
 )
 async def test_get_task_templates(
