@@ -55,7 +55,7 @@ def test_render_task_templates_empty() -> None:
         (
             WeeklyTriggerPayload(
                 type="WEEKLY",
-                weekdays=[1, 3, 5],
+                weekdays=[0, 2, 4],
                 reminder_time=None,
             ),
             ("🔁 Weekly (Mon,Wed,Fri)",),

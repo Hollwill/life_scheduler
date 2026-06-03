@@ -16,13 +16,13 @@ TIME_PATTERN = re.compile(r"^\d{2}:\d{2}$")
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 WEEKDAYS_MAPPING = {
-    "mon": 1,
-    "tue": 2,
-    "wed": 3,
-    "thu": 4,
-    "fri": 5,
-    "sat": 6,
-    "sun": 7,
+    "mon": 0,
+    "tue": 1,
+    "wed": 2,
+    "thu": 3,
+    "fri": 4,
+    "sat": 5,
+    "sun": 6,
 }
 MONTHS_MAPPING = {
     "jan": 1,

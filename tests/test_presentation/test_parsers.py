@@ -276,7 +276,7 @@ def test_parse_create_one_time_parse_error(
                 description="Just because",
                 trigger_payload=WeeklyTriggerPayload(
                     type="WEEKLY",
-                    weekdays=[1, 2],
+                    weekdays=[0, 1],
                     reminder_time=datetime.time.fromisoformat("09:00"),
                 ),
                 now=datetime.datetime.fromisoformat("2021-01-10"),
@@ -290,7 +290,7 @@ def test_parse_create_one_time_parse_error(
                 description="Just because",
                 trigger_payload=WeeklyTriggerPayload(
                     type="WEEKLY",
-                    weekdays=[1, 2],
+                    weekdays=[0, 1],
                     reminder_time=datetime.time.fromisoformat("09:00"),
                 ),
                 now=datetime.datetime.fromisoformat("2021-01-10"),
@@ -304,7 +304,7 @@ def test_parse_create_one_time_parse_error(
                 description=None,
                 trigger_payload=WeeklyTriggerPayload(
                     type="WEEKLY",
-                    weekdays=[1, 2],
+                    weekdays=[0, 1],
                     reminder_time=None,
                 ),
                 now=datetime.datetime.fromisoformat("2021-01-10"),
@@ -318,7 +318,7 @@ def test_parse_create_one_time_parse_error(
                 description="Just because | more",
                 trigger_payload=WeeklyTriggerPayload(
                     type="WEEKLY",
-                    weekdays=[1, 2],
+                    weekdays=[0, 1],
                     reminder_time=datetime.time.fromisoformat("09:00"),
                 ),
                 now=datetime.datetime.fromisoformat("2021-01-10"),
