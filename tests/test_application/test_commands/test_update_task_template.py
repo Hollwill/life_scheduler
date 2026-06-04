@@ -1,5 +1,4 @@
 import datetime
-import uuid
 
 import pytest
 
@@ -50,7 +49,7 @@ async def test_update_task_template_handler_updates_and_saves_template(
     )
 
     command = UpdateTaskTemplateCommand(
-        task_template_id=task_template.id,
+        task_template_public_id=task_template.public_id,
         title=new_title,
         description=new_description,
         trigger_payload=new_trigger_payload,
@@ -94,7 +93,7 @@ async def test_update_task_template_not_found(
     )
 
     command = UpdateTaskTemplateCommand(
-        task_template_id=uuid.uuid4(),
+        task_template_public_id="12345678",
         title="Title",
         description="Description",
         trigger_payload=trigger_payload,

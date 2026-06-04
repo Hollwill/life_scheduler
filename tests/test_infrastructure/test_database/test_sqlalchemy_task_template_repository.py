@@ -43,6 +43,24 @@ async def test_save_task_template(
     assert loaded.description == (task_template.description)
 
 
+@pytest.mark.parametrize("public_id", ("12345678",))
+@pytest.mark.parametrize(
+    "task_template", (TaskTemplateFactory.build(public_id="12345678"),)
+)
+async def test_get_by_public_id_task_template(
+    task_template_database_repository: SqlAlchemyTaskTemplateRepository,
+    public_id: str,
+    task_template: TaskTemplate,
+):
+    await task_template_database_repository.save(task_template)
+
+    task_template = await task_template_database_repository.get_by_public_id(public_id)
+    assert task_template is not None
+    assert task_template.id == task_template.id
+    assert task_template.title == task_template.title
+    assert task_template.description == task_template.description
+
+
 async def test_get_task_template_by_unknown_id_returns_none(
     task_template_database_repository: SqlAlchemyTaskTemplateRepository,
 ):

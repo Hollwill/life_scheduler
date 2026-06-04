@@ -65,9 +65,11 @@ async def test_create_task_template_handler_creates_and_saves_template(
         now=datetime.datetime.now(),
     )
 
-    task_template_id = await handler.handle(command)
+    task_template_public_id = await handler.handle(command)
 
-    saved_template = await task_template_repository.get_by_id(task_template_id)
+    saved_template = await task_template_repository.get_by_public_id(
+        task_template_public_id
+    )
 
     assert isinstance(saved_template, TaskTemplate)
 
@@ -84,7 +86,7 @@ async def test_create_task_template_handler_creates_and_saves_template(
 
     assert saved_template.is_active is True
 
-    assert task_template_id == saved_template.id
+    assert task_template_public_id == saved_template.public_id
 
 
 @pytest.mark.parametrize("user", (UserFactory.build(),))

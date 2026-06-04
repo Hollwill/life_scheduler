@@ -1,6 +1,5 @@
 import datetime
 import typing
-import uuid
 
 from pydantic import BaseModel, Field, TypeAdapter
 
@@ -53,7 +52,7 @@ trigger_payload_adapter = TypeAdapter(TriggerPayload)
 
 
 class TaskTemplateResponse(BaseModel):
-    id: uuid.UUID
+    public_id: str
     title: str
     description: str | None
     trigger: TriggerPayload

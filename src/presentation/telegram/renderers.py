@@ -49,7 +49,7 @@ def _render_trigger(trigger: TriggerPayload) -> str:
 
 
 def _render_task_template(task_template: TaskTemplateResponse) -> str:
-    parts = [f"#{str(task_template.id)[:8]}", f"{task_template.title}"]
+    parts = [f"#{str(task_template.public_id)}", f"{task_template.title}"]
 
     if task_template.description:
         parts.append(f"📝 {task_template.description}")

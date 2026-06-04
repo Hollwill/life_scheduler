@@ -13,6 +13,7 @@ class TaskTemplateModel(Base):
     __tablename__ = "task_template"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    public_id: Mapped[str] = mapped_column(String(8), nullable=False, unique=True)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), nullable=False, index=True
     )

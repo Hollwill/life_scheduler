@@ -21,8 +21,8 @@ def test_render_task_templates_empty() -> None:
 
 
 @pytest.mark.parametrize(
-    ("task_template_id", "task_template_title"),
-    ((uuid.UUID("00000000-0000-0000-0000-000000000001"), "Drink water"),),
+    ("task_template_public_id", "task_template_title"),
+    (("00000000", "Drink water"),),
 )
 @pytest.mark.parametrize(
     "expected_task_template_parts",
@@ -80,14 +80,14 @@ def test_render_task_templates_empty() -> None:
     ),
 )
 def test_render_task_templates_trigger_types(
-    task_template_id: uuid.UUID,
+    task_template_public_id: str,
     task_template_title: str,
     trigger: TriggerPayload,
     expected_task_template_parts: tuple[str, ...],
     expected_trigger_parts: tuple[str, ...],
 ) -> None:
     template = TaskTemplateResponse(
-        id=task_template_id,
+        public_id=task_template_public_id,
         title=task_template_title,
         description=None,
         trigger=trigger,
@@ -107,7 +107,7 @@ def test_render_task_templates_trigger_types(
     "task_template_response",
     (
         TaskTemplateResponse(
-            id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
+            public_id="00000000",
             title="Drink water",
             description="2 liters per day",
             trigger=DailyTriggerPayload(
@@ -137,7 +137,7 @@ def test_render_task_templates_with_description(
     (
         (
             TaskTemplateResponse(
-                id=uuid.UUID("00000001-0000-0000-0000-000000000001"),
+                public_id="00000001",
                 title="Drink water",
                 description=None,
                 trigger=DailyTriggerPayload(
@@ -146,7 +146,7 @@ def test_render_task_templates_with_description(
                 ),
             ),
             TaskTemplateResponse(
-                id=uuid.UUID("00000002-0000-0000-0000-000000000002"),
+                public_id="00000002",
                 title="Workout",
                 description=None,
                 trigger=MonthlyTriggerPayload(

@@ -26,7 +26,7 @@ class CreateTaskTemplateCommand:
     now: datetime.datetime
 
 
-class CreateTaskTemplateHandler(CommandHandler[CreateTaskTemplateCommand, uuid.UUID]):
+class CreateTaskTemplateHandler(CommandHandler[CreateTaskTemplateCommand, str]):
     def __init__(
         self,
         task_template_repository: TaskTemplateRepository,
@@ -35,7 +35,7 @@ class CreateTaskTemplateHandler(CommandHandler[CreateTaskTemplateCommand, uuid.U
         self.task_template_repository: TaskTemplateRepository = task_template_repository
         self.user_repository: UserRepository = user_repository
 
-    async def handle(self, command: CreateTaskTemplateCommand) -> uuid.UUID:
+    async def handle(self, command: CreateTaskTemplateCommand) -> str:
         user: User | None = await self.user_repository.get_by_id(command.user_id)
         if user is None:
             raise UserNotFoundException({"user_id": command.user_id})
@@ -48,12 +48,12 @@ class CreateTaskTemplateHandler(CommandHandler[CreateTaskTemplateCommand, uuid.U
             now=command.now,
         )
         await self.task_template_repository.save(task_template)
-        return task_template.id
+        return task_template.public_id
 
 
 @dataclasses.dataclass
 class UpdateTaskTemplateCommand:
-    task_template_id: uuid.UUID
+    task_template_public_id: str
     title: str
     description: str | None
     trigger_payload: TriggerPayload
@@ -68,12 +68,12 @@ class UpdateTaskTemplateHandler(CommandHandler[UpdateTaskTemplateCommand, None])
         self.task_template_repository: TaskTemplateRepository = task_template_repository
 
     async def handle(self, command: UpdateTaskTemplateCommand) -> None:
-        task_template = await self.task_template_repository.get_by_id(
-            command.task_template_id
+        task_template = await self.task_template_repository.get_by_public_id(
+            command.task_template_public_id
         )
         if task_template is None:
             raise TaskTemplateNotFoundException(
-                {"task_template_id": command.task_template_id}
+                {"task_template_id": command.task_template_public_id}
             )
 
         task_template.edit(

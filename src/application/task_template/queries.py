@@ -28,7 +28,7 @@ class GetTaskTemplatesHandler(
 
         return TypeAdapter(list[TaskTemplateResponse]).validate_python(
             TaskTemplateResponse(
-                id=task_template.id,
+                public_id=task_template.public_id,
                 title=task_template.title,
                 description=task_template.description,
                 trigger=TriggerMapper.to_model(task_template.trigger),

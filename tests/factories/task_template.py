@@ -3,6 +3,7 @@ import uuid
 
 import factory
 
+from domain.common.utils import generate_public_id
 from domain.task_template.aggregate import TaskTemplate
 from tests.factories.trigger import (
     DailyTriggerFactory,
@@ -14,6 +15,8 @@ class TaskTemplateFactory(factory.Factory):
         model = TaskTemplate
 
     id = factory.LazyFunction(uuid.uuid4)
+
+    public_id = factory.LazyFunction(generate_public_id)
 
     user_id = factory.LazyFunction(uuid.uuid4)
 

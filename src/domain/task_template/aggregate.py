@@ -3,6 +3,7 @@ import typing
 import uuid
 
 from domain.common import AggregateRoot
+from domain.common.utils import generate_public_id
 from domain.task_template.entities import Trigger
 
 EMPTY = object()
@@ -12,6 +13,7 @@ class TaskTemplate(AggregateRoot[uuid.UUID]):
     def __init__(
         self,
         id: uuid.UUID,
+        public_id: str,
         user_id: uuid.UUID,
         title: str,
         description: str | None,
@@ -21,6 +23,7 @@ class TaskTemplate(AggregateRoot[uuid.UUID]):
         updated_at: datetime.datetime,
     ):
         super().__init__(id)
+        self.public_id = public_id
         self.user_id: uuid.UUID = user_id
         self.title: str = title
         self.description: str | None = description
@@ -40,6 +43,7 @@ class TaskTemplate(AggregateRoot[uuid.UUID]):
     ) -> typing.Self:
         return cls(
             id=uuid.uuid4(),
+            public_id=generate_public_id(),
             user_id=user_id,
             title=title,
             description=description,

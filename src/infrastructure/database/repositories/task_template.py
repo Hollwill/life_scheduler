@@ -33,6 +33,22 @@ class SqlAlchemyTaskTemplateRepository(TaskTemplateRepository):
 
         return task_template_from_orm(instance)
 
+    async def get_by_public_id(
+        self, task_template_public_id: str
+    ) -> TaskTemplate | None:
+
+        result = await self.session.execute(
+            select(TaskTemplateModel).where(
+                TaskTemplateModel.public_id == task_template_public_id
+            )
+        )
+        instance = result.scalars().first()
+
+        if instance is None:
+            return None
+
+        return task_template_from_orm(instance)
+
     async def save(
         self,
         task_template: TaskTemplate,

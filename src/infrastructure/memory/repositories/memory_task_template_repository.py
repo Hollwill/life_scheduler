@@ -17,6 +17,14 @@ class MemoryTaskTemplateRepository(TaskTemplateRepository):
             return None
         return copy.deepcopy(template)
 
+    async def get_by_public_id(
+        self, task_template_public_id: str
+    ) -> TaskTemplate | None:
+        for task_template in self.task_templates.values():
+            if task_template_public_id == task_template.public_id:
+                return copy.deepcopy(task_template)
+        return None
+
     async def save(self, task_template: TaskTemplate) -> None:
         self.task_templates[task_template.id] = copy.deepcopy(task_template)
 

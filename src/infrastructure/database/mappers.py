@@ -120,6 +120,7 @@ def trigger_to_dict(trigger: Trigger) -> dict[str, Any]:
 def task_template_from_orm(task_template_orm: TaskTemplateModel) -> TaskTemplate:
     return TaskTemplate(
         id=task_template_orm.id,
+        public_id=task_template_orm.public_id,
         user_id=task_template_orm.user_id,
         title=task_template_orm.title,
         description=task_template_orm.description,
@@ -133,6 +134,7 @@ def task_template_from_orm(task_template_orm: TaskTemplateModel) -> TaskTemplate
 def task_template_to_orm(task_template: TaskTemplate) -> TaskTemplateModel:
     return TaskTemplateModel(
         id=task_template.id,
+        public_id=task_template.public_id,
         user_id=task_template.user_id,
         title=task_template.title,
         description=task_template.description,
