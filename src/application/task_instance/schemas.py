@@ -1,11 +1,10 @@
 import datetime
-import uuid
 
 from pydantic import BaseModel
 
 
 class TaskInstanceResponse(BaseModel):
-    id: uuid.UUID
+    public_id: str
 
     title: str
     description: str | None

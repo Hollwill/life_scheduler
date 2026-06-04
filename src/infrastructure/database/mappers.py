@@ -148,6 +148,7 @@ def task_template_to_orm(task_template: TaskTemplate) -> TaskTemplateModel:
 def task_instance_from_orm(task_instance_orm: TaskInstanceModel) -> TaskInstance:
     return TaskInstance(
         id=task_instance_orm.id,
+        public_id=task_instance_orm.public_id,
         user_id=task_instance_orm.user_id,
         task_template_id=task_instance_orm.task_template_id,
         title=task_instance_orm.title,
@@ -163,6 +164,7 @@ def task_instance_from_orm(task_instance_orm: TaskInstanceModel) -> TaskInstance
 def task_instance_to_orm(task_instance: TaskInstance) -> TaskInstanceModel:
     return TaskInstanceModel(
         id=task_instance.id,
+        public_id=task_instance.public_id,
         user_id=task_instance.user_id,
         task_template_id=task_instance.task_template_id,
         title=task_instance.title,

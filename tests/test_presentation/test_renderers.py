@@ -1,5 +1,4 @@
 import datetime
-import uuid
 
 import pytest
 
@@ -174,10 +173,10 @@ def test_render_task_instances_empty() -> None:
 
 
 @pytest.mark.parametrize(
-    ("task_instance_id", "task_instance_title"),
+    ("task_instance_public_id", "task_instance_title"),
     (
         (
-            uuid.UUID("00000000-0000-0000-0000-000000000001"),
+            "00000000",
             "Drink water",
         ),
     ),
@@ -222,7 +221,7 @@ def test_render_task_instances_empty() -> None:
     ),
 )
 def test_render_task_instances_status_and_schedule(
-    task_instance_id: uuid.UUID,
+    task_instance_public_id: str,
     task_instance_title: str,
     occurrence_date: datetime.date,
     scheduled_at: datetime.datetime | None,
@@ -231,7 +230,7 @@ def test_render_task_instances_status_and_schedule(
     expected_status_parts: tuple[str, ...],
 ) -> None:
     task_instance = TaskInstanceResponse(
-        id=task_instance_id,
+        public_id=task_instance_public_id,
         title=task_instance_title,
         description=None,
         occurrence_date=occurrence_date,
@@ -261,7 +260,7 @@ def test_render_task_instances_status_and_schedule(
     "task_instance_response",
     (
         TaskInstanceResponse(
-            id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
+            public_id="00000000",
             title="Drink water",
             description="2 liters per day",
             occurrence_date=datetime.date.fromisoformat("2026-06-10"),
@@ -296,7 +295,7 @@ def test_render_task_instances_with_description(
     (
         (
             TaskInstanceResponse(
-                id=uuid.UUID("00000001-0000-0000-0000-000000000001"),
+                public_id="00000001",
                 title="Drink water",
                 description=None,
                 occurrence_date=datetime.date.fromisoformat("2026-06-10"),
@@ -304,7 +303,7 @@ def test_render_task_instances_with_description(
                 status="CREATED",
             ),
             TaskInstanceResponse(
-                id=uuid.UUID("00000002-0000-0000-0000-000000000002"),
+                public_id="00000002",
                 title="Workout",
                 description=None,
                 occurrence_date=datetime.date.fromisoformat("2026-06-10"),

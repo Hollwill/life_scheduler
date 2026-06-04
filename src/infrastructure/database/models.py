@@ -36,51 +36,43 @@ class TaskInstanceModel(Base):
         UUID(as_uuid=True),
         primary_key=True,
     )
-
+    public_id: Mapped[str] = mapped_column(String(8), nullable=False, unique=True)
     task_template_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         nullable=False,
         index=True,
     )
-
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         nullable=False,
         index=True,
     )
-
     title: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
     )
-
     description: Mapped[str | None] = mapped_column(
         String,
         nullable=True,
     )
-
     occurrence_date: Mapped[datetime.date] = mapped_column(
         Date,
         nullable=False,
         index=True,
     )
-
     scheduled_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
         index=True,
     )
-
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
     )
-
     status: Mapped[TaskStatus] = mapped_column(
         Enum(TaskStatus),
         nullable=False,
     )
-
     postpone_reason: Mapped[str | None] = mapped_column(
         String,
         nullable=True,

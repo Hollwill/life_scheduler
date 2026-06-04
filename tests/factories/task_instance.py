@@ -3,6 +3,7 @@ import uuid
 
 import factory
 
+from domain.common.utils import generate_public_id
 from domain.task_instance.aggregate import TaskInstance, TaskStatus
 from tests.factories.task_template import TaskTemplateFactory
 from tests.factories.user import UserFactory
@@ -13,6 +14,8 @@ class TaskInstanceFactory(factory.Factory):
         model = TaskInstance
 
     id = factory.LazyFunction(uuid.uuid4)
+
+    public_id = factory.LazyFunction(generate_public_id)
 
     task_template = factory.SubFactory(TaskTemplateFactory)
 

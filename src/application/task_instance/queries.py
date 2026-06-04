@@ -29,7 +29,7 @@ class GetTaskInstancesHandler(
 
         return TypeAdapter(list[TaskInstanceResponse]).validate_python(
             TaskInstanceResponse(
-                id=task_instance.id,
+                public_id=task_instance.public_id,
                 title=task_instance.title,
                 description=task_instance.description,
                 occurrence_date=task_instance.occurrence_date,

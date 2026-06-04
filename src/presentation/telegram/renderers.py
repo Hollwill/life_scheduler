@@ -71,7 +71,7 @@ def render_task_templates(task_templates: Iterable[TaskTemplateResponse]) -> str
 
 def _render_task_instance(task_instance: TaskInstanceResponse) -> str:
     parts = [
-        f"#{str(task_instance.id)[:8]}",
+        f"#{str(task_instance.public_id)}",
         task_instance.title,
     ]
 

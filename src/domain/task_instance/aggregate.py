@@ -3,6 +3,7 @@ import uuid
 from enum import Enum
 
 from domain.common import AggregateRoot
+from domain.common.utils import generate_public_id
 from domain.task_instance.exceptions import (
     TaskInstanceInvalidPostponeDateException,
     TaskInstanceInvalidStatusException,
@@ -19,6 +20,7 @@ class TaskInstance(AggregateRoot[uuid.UUID]):
     def __init__(
         self,
         id: uuid.UUID,
+        public_id: str,
         task_template_id: uuid.UUID,
         user_id: uuid.UUID,
         title: str,
@@ -30,6 +32,7 @@ class TaskInstance(AggregateRoot[uuid.UUID]):
         postpone_reason: str | None,
     ):
         super().__init__(id)
+        self.public_id = public_id
         self.task_template_id = task_template_id
         self.user_id = user_id
         self.title = title
@@ -53,6 +56,7 @@ class TaskInstance(AggregateRoot[uuid.UUID]):
     ) -> "TaskInstance":
         return cls(
             id=uuid.uuid4(),
+            public_id=generate_public_id(),
             task_template_id=task_template_id,
             user_id=user_id,
             title=title,
