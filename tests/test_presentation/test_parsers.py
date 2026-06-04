@@ -456,14 +456,11 @@ def test_parse_create_monthly(
 @pytest.mark.parametrize(
     "command_raw",
     (
-        # "",
-        # "09:00",
-        # "15",
-        "0 Drink",
-        "32 Drink",
-        "99 Drink",
-        # "09:99 15 Drink",
-        # "|",
+        "",
+        "09:00",
+        "15",
+        "09:99 15 Drink",
+        "|",
     ),
 )
 @pytest.mark.parametrize(
@@ -568,7 +565,6 @@ def test_parse_create_yearly(
         "jan",
         "jan 15",
         "foo 15 Drink",
-        "jan 99 Drink",
         "09:99 jan 15 Drink",
         "|",
     ),

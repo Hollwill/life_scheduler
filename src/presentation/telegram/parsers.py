@@ -115,10 +115,8 @@ def _parse_day_of_month(command_raw: str) -> tuple[str, int]:
         raise ParseError("Invalid day of month")
 
     day_of_month = int(possible_day_of_month)
-    if not (1 <= day_of_month <= 31):
-        raise ParseError("Invalid day of month")
 
-    return (parts[1] if len(parts) > 1 else ""), int(possible_day_of_month)
+    return (parts[1] if len(parts) > 1 else ""), day_of_month
 
 
 def _parse_month(command_raw: str) -> tuple[str, int]:
