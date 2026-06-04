@@ -11,6 +11,7 @@ from presentation.telegram.bot import (
     create_one_time,
     create_weekly,
     create_yearly,
+    deactivate_template,
     tasks,
     templates,
 )
@@ -57,6 +58,32 @@ async def test_templates_handler(user_id: uuid.UUID):
     )  # noqa
 
     get_task_templates_handler.handle.assert_awaited_once()
+    message.answer.assert_awaited_once()
+
+
+@pytest.mark.parametrize(
+    "user_id", (uuid.UUID("00000000-0000-0000-0000-000000000000"),)
+)
+async def test_deactivate_template_handler(user_id: uuid.UUID):
+    message = AsyncMock()
+    container = AsyncMock()
+
+    command = CommandObject(
+        prefix="/",
+        command="deactivate",
+        args="ABC12345",
+    )
+
+    deactivate_task_template_handler = AsyncMock()
+    container.get.return_value = deactivate_task_template_handler
+
+    await deactivate_template(
+        message,
+        command,
+        dishka_container=container,  # noqa
+    )  # noqa
+
+    deactivate_task_template_handler.handle.assert_awaited_once()
     message.answer.assert_awaited_once()
 
 

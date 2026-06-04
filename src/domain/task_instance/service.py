@@ -11,6 +11,8 @@ class TaskGenerationService:
         day: datetime.date,
         now: datetime.datetime,
     ) -> TaskInstance | None:
+        if not template.is_active:
+            return None
         if not template.occurs_on(day):
             return None
         reminder_at = template.reminder_at(day)

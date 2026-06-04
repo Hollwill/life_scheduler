@@ -105,3 +105,7 @@ def render_task_instances(
     ]
 
     return "\n\n".join((header, *rendered))
+
+
+def render_deactivate_task_template(task_template_public_id: str) -> str:
+    return f"Task template #{task_template_public_id} deactivated"

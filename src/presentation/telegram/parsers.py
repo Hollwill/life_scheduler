@@ -270,3 +270,10 @@ def parse_create_yearly(
         ),
         now=now,
     )
+
+
+def parse_public_id(command_raw):
+    public_id = command_raw
+    if not public_id or len(public_id.split()) != 1:
+        raise ParseError("Should be passed only one argument.")
+    return public_id

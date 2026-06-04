@@ -12,6 +12,8 @@ from application.task_instance.queries import (
 )
 from application.task_template.commands import (
     CreateTaskTemplateHandler,
+    DeactivateTaskTemplateCommand,
+    DeactivateTaskTemplateHandler,
 )
 from application.task_template.queries import (
     GetTaskTemplatesHandler,
@@ -28,8 +30,13 @@ from presentation.telegram.parsers import (
     parse_create_one_time,
     parse_create_weekly,
     parse_create_yearly,
+    parse_public_id,
 )
-from presentation.telegram.renderers import render_task_instances, render_task_templates
+from presentation.telegram.renderers import (
+    render_deactivate_task_template,
+    render_task_instances,
+    render_task_templates,
+)
 
 dp = Dispatcher()
 
@@ -68,6 +75,32 @@ async def templates(
     )
 
     await message.answer(render_task_templates(task_templates=task_templates))
+
+
+@dp.message(Command("deactivate"))
+@parse_error_handle(
+    "/deactivate ABC12345",
+)
+@inject
+async def deactivate_template(
+    message: Message,
+    command: CommandObject,
+    deactivate_task_template_handler: FromDishka[DeactivateTaskTemplateHandler],
+):
+    # TODO добавить проверку на то что пользователь деактивирует свой шаблон
+
+    public_id = parse_public_id(command.args)
+
+    await deactivate_task_template_handler.handle(
+        command=DeactivateTaskTemplateCommand(
+            task_template_public_id=public_id,
+            now=datetime.datetime.now(tz=datetime.UTC),
+        ),
+    )
+
+    await message.answer(
+        render_deactivate_task_template(task_template_public_id=public_id)
+    )
 
 
 @dp.message(Command("tasks"))

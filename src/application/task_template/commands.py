@@ -87,6 +87,37 @@ class UpdateTaskTemplateHandler(CommandHandler[UpdateTaskTemplateCommand, None])
 
 
 @dataclasses.dataclass
+class DeactivateTaskTemplateCommand:
+    task_template_public_id: str
+    now: datetime.datetime
+
+
+class DeactivateTaskTemplateHandler(
+    CommandHandler[DeactivateTaskTemplateCommand, None]
+):
+    def __init__(
+        self,
+        task_template_repository: TaskTemplateRepository,
+    ) -> None:
+        self.task_template_repository: TaskTemplateRepository = task_template_repository
+
+    async def handle(self, command: UpdateTaskTemplateCommand) -> None:
+        task_template = await self.task_template_repository.get_by_public_id(
+            command.task_template_public_id
+        )
+        if task_template is None:
+            raise TaskTemplateNotFoundException(
+                {"task_template_id": command.task_template_public_id}
+            )
+
+        task_template.deactivate(
+            now=command.now,
+        )
+
+        await self.task_template_repository.save(task_template)
+
+
+@dataclasses.dataclass
 class GenerateTasksForDayCommand:
     day: datetime.date
 
