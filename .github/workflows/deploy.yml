@@ -50,14 +50,14 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.PAT_DEPLOY_TOKEN }}
+            podman login ghcr.io -u ${{ github.actor }} -p ${{ secrets.PAT_DEPLOY_TOKEN }}
 
-            docker pull ghcr.io/${{ github.repository }}:latest
+            podman pull ghcr.io/${{ github.repository }}:latest
 
-            docker stop task-bot || true
-            docker rm task-bot || true
+            podman stop task-bot || true
+            podman rm task-bot || true
 
-            docker run -d \
+            podman run -d \
               --name task-bot \
               --restart unless-stopped \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
