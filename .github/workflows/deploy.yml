@@ -11,7 +11,6 @@ permissions:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -25,17 +24,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set image name
+      - name: Build & push image
         run: |
-          echo "IMAGE_NAME=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          IMAGE="ghcr.io/${{ github.repository }}"
+          IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
 
-      - name: Build image
-        run: |
-          docker build -t ghcr.io/${IMAGE_NAME}:latest .
+          echo "IMAGE=$IMAGE"
 
-      - name: Push image
-        run: |
-          docker push ghcr.io/${IMAGE_NAME}:latest
+          docker build -t $IMAGE:latest .
+          docker push $IMAGE:latest
 
 
   deploy:
@@ -43,6 +40,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -50,16 +48,23 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            podman login ghcr.io -u ${{ github.actor }} -p ${{ secrets.PAT_DEPLOY_TOKEN }}
 
-            podman pull ghcr.io/${{ github.repository }}:latest
+            IMAGE="ghcr.io/${{ github.repository }}"
+            IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
 
-            podman stop task-bot || true
-            podman rm task-bot || true
+            echo "Deploying image: $IMAGE"
+
+            podman login ghcr.io \
+              -u ${{ github.actor }} \
+              -p ${{ secrets.PAT_DEPLOY_TOKEN }}
+
+            podman pull $IMAGE:latest
+
+            podman rm -f life-scheduler-telegram-bot || true
 
             podman run -d \
-              --name task-bot \
+              --name life-scheduler-telegram-bot \
               --restart unless-stopped \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               -e BOT_TOKEN="${{ secrets.BOT_TOKEN }}" \
-              ghcr.io/${{ github.repository }}:latest
+              $IMAGE:latest
