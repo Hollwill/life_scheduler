@@ -62,7 +62,7 @@ jobs:
 
             podman rm -f life-scheduler-telegram-bot || true
 
-            podman run -d \
+            podman run -d
               --name life-scheduler-telegram-bot \
               --restart unless-stopped \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
