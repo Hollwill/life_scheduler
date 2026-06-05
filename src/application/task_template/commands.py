@@ -101,7 +101,7 @@ class DeactivateTaskTemplateHandler(
     ) -> None:
         self.task_template_repository: TaskTemplateRepository = task_template_repository
 
-    async def handle(self, command: UpdateTaskTemplateCommand) -> None:
+    async def handle(self, command: DeactivateTaskTemplateCommand) -> None:
         task_template = await self.task_template_repository.get_by_public_id(
             command.task_template_public_id
         )

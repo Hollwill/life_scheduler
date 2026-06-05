@@ -87,6 +87,29 @@ async def test_deactivate_template_handler(user_id: uuid.UUID):
     message.answer.assert_awaited_once()
 
 
+async def test_complete_task_handler():
+    message = AsyncMock()
+    container = AsyncMock()
+
+    command = CommandObject(
+        prefix="/",
+        command="complete",
+        args="ABC12345",
+    )
+
+    complete_task_instance_handler = AsyncMock()
+    container.get.return_value = complete_task_instance_handler
+
+    await deactivate_template(
+        message,
+        command,
+        dishka_container=container,  # noqa
+    )  # noqa
+
+    complete_task_instance_handler.handle.assert_awaited_once()
+    message.answer.assert_awaited_once()
+
+
 @pytest.mark.parametrize(
     "user_id",
     (uuid.UUID("00000000-0000-0000-0000-000000000000"),),

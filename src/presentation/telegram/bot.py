@@ -6,6 +6,10 @@ from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
+from application.task_instance.commands import (
+    CompleteTaskInstanceCommand,
+    CompleteTaskInstanceHandler,
+)
 from application.task_instance.queries import (
     GetTaskInstancesHandler,
     GetTaskInstancesQuery,
@@ -33,6 +37,7 @@ from presentation.telegram.parsers import (
     parse_public_id,
 )
 from presentation.telegram.renderers import (
+    render_complete_task_instance,
     render_deactivate_task_template,
     render_task_instances,
     render_task_templates,
@@ -100,6 +105,31 @@ async def deactivate_template(
 
     await message.answer(
         render_deactivate_task_template(task_template_public_id=public_id)
+    )
+
+
+@dp.message(Command("complete"))
+@parse_error_handle(
+    "/complete ABC12345",
+)
+@inject
+async def complete_task(
+    message: Message,
+    command: CommandObject,
+    complete_task_instance_handler: FromDishka[CompleteTaskInstanceHandler],
+):
+    # TODO добавить проверку на то что пользователь завершает свою задачу
+
+    public_id = parse_public_id(command.args)
+
+    await complete_task_instance_handler.handle(
+        command=CompleteTaskInstanceCommand(
+            task_instance_public_id=public_id,
+        ),
+    )
+
+    await message.answer(
+        render_complete_task_instance(task_instance_public_id=public_id)
     )
 
 

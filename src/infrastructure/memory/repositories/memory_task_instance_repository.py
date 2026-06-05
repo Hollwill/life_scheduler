@@ -17,6 +17,15 @@ class MemoryTaskInstanceRepository(TaskInstanceRepository):
             return None
         return copy.deepcopy(instance)
 
+    async def get_by_public_id(
+        self, task_instance_public_id: str
+    ) -> TaskInstance | None:
+
+        for task_instance in self.task_instances.values():
+            if task_instance.public_id == task_instance_public_id:
+                return copy.deepcopy(task_instance)
+        return None
+
     async def save(self, task_instance: TaskInstance) -> None:
         self.task_instances[task_instance.id] = copy.deepcopy(task_instance)
 

@@ -25,6 +25,20 @@ class SqlAlchemyTaskInstanceRepository(TaskInstanceRepository):
 
         return task_instance_from_orm(instance)
 
+    async def get_by_public_id(
+        self, task_instance_public_id: str
+    ) -> TaskInstance | None:
+        result = await self.session.execute(
+            select(TaskInstanceModel).where(
+                TaskInstanceModel.public_id == task_instance_public_id
+            )
+        )
+        instance = result.scalars().first()
+        if instance is None:
+            return None
+
+        return task_instance_from_orm(instance)
+
     async def save(self, task_instance: TaskInstance) -> None:
         instance = await self.session.get(TaskInstanceModel, task_instance.id)
 

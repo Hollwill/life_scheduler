@@ -32,6 +32,27 @@ async def test_save_task_instance(
 
 
 @pytest.mark.parametrize(
+    "task_instance", (TaskInstanceFactory.build(public_id="00000000"),)
+)
+async def test_task_instance_get_by_public_id(
+    task_instance_database_repository: SqlAlchemyTaskInstanceRepository,
+    task_instance: TaskInstance,
+):
+    await task_instance_database_repository.save(
+        task_instance,
+    )
+
+    loaded = await task_instance_database_repository.get_by_public_id(
+        task_instance.public_id,
+    )
+
+    assert loaded is not None
+    assert loaded.id == task_instance.id
+    assert loaded.title == task_instance.title
+    assert loaded.description == task_instance.description
+
+
+@pytest.mark.parametrize(
     ("original_task_instance", "duplicated_task_instance"),
     (
         (

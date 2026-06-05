@@ -12,6 +12,12 @@ class TaskInstanceRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
+    async def get_by_public_id(
+        self, task_instance_public_id: str
+    ) -> TaskInstance | None:
+        pass
+
+    @abc.abstractmethod
     async def save(self, task_instance: TaskInstance) -> None:
         pass
 

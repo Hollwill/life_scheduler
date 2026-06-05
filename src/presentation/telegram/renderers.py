@@ -109,3 +109,7 @@ def render_task_instances(
 
 def render_deactivate_task_template(task_template_public_id: str) -> str:
     return f"Task template #{task_template_public_id} deactivated"
+
+
+def render_complete_task_instance(task_instance_public_id: str) -> str:
+    return f"Task instance #{task_instance_public_id} completed"

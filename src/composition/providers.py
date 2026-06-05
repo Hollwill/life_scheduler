@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from application.task_instance.commands import CompleteTaskInstanceHandler
 from application.task_instance.queries import GetTaskInstancesHandler
 from application.task_template.commands import (
     CreateTaskTemplateHandler,
@@ -68,6 +69,16 @@ class ApplicationProvider(Provider):
     ) -> GetTaskInstancesHandler:
 
         return GetTaskInstancesHandler(
+            task_instance_repository=task_instance_repository,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def complete_task_instance_handler(
+        self,
+        task_instance_repository: TaskInstanceRepository,
+    ) -> CompleteTaskInstanceHandler:
+
+        return CompleteTaskInstanceHandler(
             task_instance_repository=task_instance_repository,
         )
 

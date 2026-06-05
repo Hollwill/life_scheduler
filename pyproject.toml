@@ -29,8 +29,16 @@ dev = [
 profile = "black"
 
 [tool.pytest.ini_options]
+testpaths = ["tests"]
 pythonpath = ["src"]
 asyncio_mode = "auto"
 
 [tool.pyright]
 extraPaths = ["src"]
+
+[tool.coverage.run]
+source = ["src"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
