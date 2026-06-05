@@ -63,6 +63,7 @@ jobs:
             podman run -d \
               --name life-scheduler-telegram-bot \
               --restart unless-stopped \
+              --network=host \
               -e DATABASE_URL="$DATABASE_URL" \
               -e TELEGRAM_BOT_TOKEN="$BOT_TOKEN" \
               "$IMAGE:latest"
