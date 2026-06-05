@@ -64,5 +64,5 @@ jobs:
               --name life-scheduler-telegram-bot \
               --restart unless-stopped \
               -e DATABASE_URL="$DATABASE_URL" \
-              -e BOT_TOKEN="$BOT_TOKEN" \
+              -e TELEGRAM_BOT_TOKEN="$BOT_TOKEN" \
               "$IMAGE:latest"

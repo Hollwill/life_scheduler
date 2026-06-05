@@ -13,4 +13,6 @@ RUN uv sync --frozen --no-dev
 
 COPY . .
 
-CMD ["uv", "run", "python", "-m", "src.entrypoints.bot"]
+ENV PYTHONPATH=/app/src
+
+CMD ["/app/.venv/bin/python", "-m", "entrypoints.bot"]
