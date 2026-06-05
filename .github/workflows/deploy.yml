@@ -14,11 +14,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -29,42 +27,42 @@ jobs:
           IMAGE="ghcr.io/${{ github.repository }}"
           IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
 
-          echo "IMAGE=$IMAGE"
-
-          docker build -t $IMAGE:latest .
-          docker push $IMAGE:latest
-
+          docker build -t "$IMAGE:latest" .
+          docker push "$IMAGE:latest"
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
+
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
 
+          envs: DATABASE_URL,BOT_TOKEN
+
+          script: |
             IMAGE="ghcr.io/${{ github.repository }}"
             IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
 
-            echo "Deploying image: $IMAGE"
+            echo "PULL IMAGE"
+            podman pull "$IMAGE:latest"
 
-            podman login ghcr.io \
-              -u ${{ github.actor }} \
-              -p ${{ secrets.PAT_DEPLOY_TOKEN }}
+            echo "remove old container"
+            podman rm -f life-scheduler-telegram-bot
 
-            podman pull $IMAGE:latest
-
-            podman rm -f life-scheduler-telegram-bot || true
-
-            podman run -d
+            echo "run new container"
+            podman run -d \
               --name life-scheduler-telegram-bot \
               --restart unless-stopped \
-              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              -e BOT_TOKEN="${{ secrets.BOT_TOKEN }}" \
-              $IMAGE:latest
+              -e DATABASE_URL="$DATABASE_URL" \
+              -e BOT_TOKEN="$BOT_TOKEN" \
+              "$IMAGE:latest"
