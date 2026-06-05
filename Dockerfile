@@ -13,4 +13,4 @@ RUN uv sync --frozen --no-dev
 
 COPY . .
 
-CMD ["uv", "run", "python", "-m", "src.presentation.telegram.main"]
+CMD ["uv", "run", "python", "-m", "src.entrypoints.bot"]
