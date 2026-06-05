@@ -101,28 +101,35 @@ def test_trigger_payload_validation_failure(payload_data: dict[str, typing.Any])
                 "reminder_time": "12:00:00",
             },
             OneTimeTrigger,
-            lambda domain: domain.occurrence_date == datetime.date(2026, 1, 1)
-            and domain.reminder_time == datetime.time(12, 0),
+            lambda domain: (
+                domain.occurrence_date == datetime.date(2026, 1, 1)
+                and domain.reminder_time == datetime.time(12, 0)
+            ),
         ),
         (
             {"type": "WEEKLY", "weekdays": [0, 6], "reminder_time": "08:00:00"},
             WeeklyTrigger,
-            lambda domain: domain.weekdays
-            == frozenset([Weekday.MONDAY, Weekday.SUNDAY])
-            and domain.reminder_time == datetime.time(8, 0),
+            lambda domain: (
+                domain.weekdays == frozenset([Weekday.MONDAY, Weekday.SUNDAY])
+                and domain.reminder_time == datetime.time(8, 0)
+            ),
         ),
         (
             {"type": "MONTHLY", "day_of_month": 15, "reminder_time": "18:00:00"},
             MonthlyTrigger,
-            lambda domain: domain.day_of_month == DayOfMonth(15)
-            and domain.reminder_time == datetime.time(18, 0),
+            lambda domain: (
+                domain.day_of_month == DayOfMonth(15)
+                and domain.reminder_time == datetime.time(18, 0)
+            ),
         ),
         (
             {"type": "YEARLY", "month": 12, "day": 31, "reminder_time": "23:59:59"},
             YearlyTrigger,
-            lambda domain: domain.month == Month.DECEMBER
-            and domain.day == DayOfMonth(31)
-            and domain.reminder_time == datetime.time(23, 59, 59),
+            lambda domain: (
+                domain.month == Month.DECEMBER
+                and domain.day == DayOfMonth(31)
+                and domain.reminder_time == datetime.time(23, 59, 59)
+            ),
         ),
     ],
 )
