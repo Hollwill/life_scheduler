@@ -53,13 +53,10 @@ jobs:
             IMAGE="ghcr.io/${{ github.repository }}"
             IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
 
-            echo "PULL IMAGE"
             podman pull "$IMAGE:latest"
 
-            echo "remove old container"
             podman rm -f life-scheduler-telegram-bot
 
-            echo "run new container"
             podman run -d \
               --name life-scheduler-telegram-bot \
               --restart unless-stopped \
