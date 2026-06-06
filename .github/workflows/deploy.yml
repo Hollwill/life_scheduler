@@ -38,17 +38,10 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
 
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-
-          envs: DATABASE_URL,BOT_TOKEN
-
           script: |
             IMAGE="ghcr.io/${{ github.repository }}"
             IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
@@ -59,8 +52,7 @@ jobs:
 
             podman run -d \
               --name life-scheduler-telegram-bot \
+              --env-file /home/life-scheduler/.env \
               --restart unless-stopped \
               --network=host \
-              -e DATABASE_URL="$DATABASE_URL" \
-              -e TELEGRAM_BOT_TOKEN="$BOT_TOKEN" \
               "$IMAGE:latest"
