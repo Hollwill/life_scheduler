@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from application.common.unit_of_work import UnitOfWork
 from application.task_instance.commands import CompleteTaskInstanceHandler
 from application.task_instance.queries import GetTaskInstancesHandler
 from application.task_template.commands import (
@@ -31,6 +32,7 @@ from infrastructure.database.repositories.task_template import (
 from infrastructure.database.repositories.user import (
     SqlAlchemyUserRepository,
 )
+from infrastructure.database.unit_of_work import SqlAlchemyUnitOfWork
 from settings import Settings
 
 
@@ -46,11 +48,11 @@ class ApplicationProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_or_create_user_handler(
         self,
-        user_repository: UserRepository,
+        uow: UnitOfWork,
     ) -> GetOrCreateUserHandler:
 
         return GetOrCreateUserHandler(
-            user_repository=user_repository,
+            uow=uow,
         )
 
     @provide(scope=Scope.REQUEST)
@@ -75,33 +77,24 @@ class ApplicationProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def complete_task_instance_handler(
         self,
-        task_instance_repository: TaskInstanceRepository,
+        uow: UnitOfWork,
     ) -> CompleteTaskInstanceHandler:
 
-        return CompleteTaskInstanceHandler(
-            task_instance_repository=task_instance_repository,
-        )
+        return CompleteTaskInstanceHandler(uow=uow)
 
     @provide(scope=Scope.REQUEST)
     def deactivate_task_template_handler(
-        self,
-        task_template_repository: TaskTemplateRepository,
+        self, uow: UnitOfWork
     ) -> DeactivateTaskTemplateHandler:
 
-        return DeactivateTaskTemplateHandler(
-            task_template_repository=task_template_repository,
-        )
+        return DeactivateTaskTemplateHandler(uow=uow)
 
     @provide(scope=Scope.REQUEST)
     def create_task_template_handler(
         self,
-        task_template_repository: TaskTemplateRepository,
-        user_repository: UserRepository,
+        uow: UnitOfWork,
     ) -> CreateTaskTemplateHandler:
-        return CreateTaskTemplateHandler(
-            task_template_repository=task_template_repository,
-            user_repository=user_repository,
-        )
+        return CreateTaskTemplateHandler(uow=uow)
 
 
 class DatabaseProvider(Provider):
@@ -121,6 +114,12 @@ class DatabaseProvider(Provider):
             bind=engine,
             expire_on_commit=False,
         )
+
+    @provide(scope=Scope.REQUEST)
+    def unit_of_work(
+        self, session_factory: async_sessionmaker[AsyncSession]
+    ) -> UnitOfWork:
+        return SqlAlchemyUnitOfWork(session_factory)
 
     @provide(scope=Scope.REQUEST)
     async def session(
