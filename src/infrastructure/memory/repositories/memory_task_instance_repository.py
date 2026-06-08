@@ -5,14 +5,15 @@ import uuid
 
 from domain.task_instance.aggregate import TaskInstance
 from domain.task_instance.repository import TaskInstanceRepository
+from infrastructure.memory.database import MemoryDatabase
 
 
 class MemoryTaskInstanceRepository(TaskInstanceRepository):
-    def __init__(self) -> None:
-        self.task_instances: dict[uuid.UUID, TaskInstance] = {}
+    def __init__(self, db: MemoryDatabase) -> None:
+        self.db = db
 
     async def get_by_id(self, task_instance_id: uuid.UUID) -> TaskInstance | None:
-        instance = self.task_instances.get(task_instance_id)
+        instance = self.db.task_instances.get(task_instance_id)
         if instance is None:
             return None
         return copy.deepcopy(instance)
@@ -21,20 +22,20 @@ class MemoryTaskInstanceRepository(TaskInstanceRepository):
         self, task_instance_public_id: str
     ) -> TaskInstance | None:
 
-        for task_instance in self.task_instances.values():
+        for task_instance in self.db.task_instances.values():
             if task_instance.public_id == task_instance_public_id:
                 return copy.deepcopy(task_instance)
         return None
 
     async def save(self, task_instance: TaskInstance) -> None:
-        self.task_instances[task_instance.id] = copy.deepcopy(task_instance)
+        self.db.task_instances[task_instance.id] = copy.deepcopy(task_instance)
 
     async def get_all_by_day(
         self, day: datetime.date
     ) -> collections.abc.Collection[TaskInstance]:
         return [
             task_instance
-            for task_instance in self.task_instances.values()
+            for task_instance in self.db.task_instances.values()
             if task_instance.occurrence_date == day
         ]
 
@@ -43,6 +44,6 @@ class MemoryTaskInstanceRepository(TaskInstanceRepository):
     ) -> collections.abc.Collection[TaskInstance]:
         return [
             task_instance
-            for task_instance in self.task_instances.values()
+            for task_instance in self.db.task_instances.values()
             if task_instance.occurrence_date == day and task_instance.user_id == user_id
         ]

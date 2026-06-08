@@ -2,8 +2,8 @@ import dataclasses
 import uuid
 
 from application.common.base import CommandHandler
+from application.common.unit_of_work import UnitOfWork
 from domain.user.aggregate import User
-from domain.user.repository import UserRepository
 
 
 @dataclasses.dataclass
@@ -13,17 +13,21 @@ class GetOrCreateUserCommand:
 
 
 class GetOrCreateUserHandler(CommandHandler[GetOrCreateUserCommand, uuid.UUID]):
-    def __init__(self, user_repository: UserRepository) -> None:
-        self.user_repository = user_repository
+    def __init__(
+        self,
+        uow: UnitOfWork,
+    ) -> None:
+        self.uow = uow
 
     async def handle(self, command: GetOrCreateUserCommand) -> uuid.UUID:
-        user = await self.user_repository.get_by_telegram_user_id(
-            command.telegram_user_id
-        )
-
-        if not user:
-            user = User.create(
-                telegram_user_id=command.telegram_user_id, name=command.name
+        async with self.uow:
+            user = await self.uow.users.get_by_telegram_user_id(
+                command.telegram_user_id
             )
-            await self.user_repository.save(user)
-        return user.id
+
+            if not user:
+                user = User.create(
+                    telegram_user_id=command.telegram_user_id, name=command.name
+                )
+                await self.uow.users.save(user)
+            return user.id

@@ -22,6 +22,7 @@ from infrastructure.memory.repositories.memory_task_template_repository import (
 from infrastructure.memory.repositories.memory_user_repository import (
     MemoryUserRepository,
 )
+from infrastructure.memory.unit_of_work import MemoryUnitOfWork
 from tests.factories.user import UserFactory
 
 
@@ -43,18 +44,18 @@ from tests.factories.user import UserFactory
 )
 async def test_create_task_template_handler_creates_and_saves_template(
     user: User,
+    memory_uow: MemoryUnitOfWork,
+    memory_user_repository: MemoryUserRepository,
+    memory_task_template_repository: MemoryTaskTemplateRepository,
     trigger_payload: WeeklyTriggerPayload,
     task_template_title: str,
     task_template_description: str | None,
 ):
-    task_template_repository = MemoryTaskTemplateRepository()
-    user_repository = MemoryUserRepository()
 
-    await user_repository.save(user)
+    await memory_user_repository.save(user)
 
     handler = CreateTaskTemplateHandler(
-        task_template_repository=task_template_repository,
-        user_repository=user_repository,
+        uow=memory_uow,
     )
 
     command = CreateTaskTemplateCommand(
@@ -67,7 +68,7 @@ async def test_create_task_template_handler_creates_and_saves_template(
 
     task_template_public_id = await handler.handle(command)
 
-    saved_template = await task_template_repository.get_by_public_id(
+    saved_template = await memory_task_template_repository.get_by_public_id(
         task_template_public_id
     )
 
@@ -100,16 +101,14 @@ async def test_create_task_template_handler_creates_and_saves_template(
 )
 async def test_create_task_template_user_not_found(
     user: User,
+    memory_uow: MemoryUnitOfWork,
     trigger_payload: TriggerPayload,
     task_template_title: str,
     task_template_description: str | None,
 ):
-    task_template_repository = MemoryTaskTemplateRepository()
-    user_repository = MemoryUserRepository()
 
     handler = CreateTaskTemplateHandler(
-        task_template_repository=task_template_repository,
-        user_repository=user_repository,
+        uow=memory_uow,
     )
 
     command = CreateTaskTemplateCommand(

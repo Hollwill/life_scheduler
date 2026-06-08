@@ -16,6 +16,7 @@ from infrastructure.memory.repositories import (
 from infrastructure.memory.repositories.memory_task_template_repository import (
     MemoryTaskTemplateRepository,
 )
+from infrastructure.memory.unit_of_work import MemoryUnitOfWork
 from tests.factories.task_instance import TaskInstanceFactory
 from tests.factories.task_template import TaskTemplateFactory
 from tests.factories.trigger import OneTimeTriggerFactory
@@ -82,32 +83,32 @@ from tests.factories.trigger import OneTimeTriggerFactory
     ),
 )
 async def test_generate_tasks_for_day(
+    memory_uow: MemoryUnitOfWork,
+    memory_task_template_repository: MemoryTaskTemplateRepository,
+    memory_task_instance_repository: MemoryTaskInstanceRepository,
     task_templates: tuple[TaskTemplate, ...],
     task_instances: tuple[TaskInstance, ...],
     expected_task_instance_count: int,
     expected_task_template_ids: tuple[uuid.UUID, ...],
     now: datetime.datetime,
 ):
-    task_instance_repo = MemoryTaskInstanceRepository()
-    task_template_repo = MemoryTaskTemplateRepository()
     task_generation_service = TaskGenerationService()
 
     for task_template in task_templates:
-        await task_template_repo.save(task_template)
+        await memory_task_template_repository.save(task_template)
 
     for task_instance in task_instances:
-        await task_instance_repo.save(task_instance)
+        await memory_task_instance_repository.save(task_instance)
 
     command = GenerateTasksForDayCommand(day=datetime.date.fromisoformat("2021-01-10"))
 
     await GenerateTasksForDayHandler(
-        task_template_repository=task_template_repo,
-        task_instance_repository=task_instance_repo,
+        uow=memory_uow,
         task_generation_service=task_generation_service,
         now=now,
     ).handle(command)
 
-    task_instances = await task_instance_repo.get_all_by_day(command.day)
+    task_instances = await memory_task_instance_repository.get_all_by_day(command.day)
 
     assert len(task_instances) == expected_task_instance_count
 

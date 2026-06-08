@@ -18,6 +18,7 @@ from domain.task_template.value_objects import Weekday
 from infrastructure.memory.repositories.memory_task_template_repository import (
     MemoryTaskTemplateRepository,
 )
+from infrastructure.memory.unit_of_work import MemoryUnitOfWork
 from tests.factories.task_template import TaskTemplateFactory
 from tests.factories.trigger import WeeklyTriggerFactory
 
@@ -35,17 +36,18 @@ from tests.factories.trigger import WeeklyTriggerFactory
     ((("New Title", "New Description"), ("New Title", None))),
 )
 async def test_update_task_template_handler_updates_and_saves_template(
+    memory_uow: MemoryUnitOfWork,
+    memory_task_template_repository: MemoryTaskTemplateRepository,
     task_template: TaskTemplate,
     new_trigger_payload: WeeklyTriggerPayload,
     new_title: str,
     new_description: str | None,
 ):
-    task_template_repository = MemoryTaskTemplateRepository()
 
-    await task_template_repository.save(task_template)
+    await memory_task_template_repository.save(task_template)
 
     handler = UpdateTaskTemplateHandler(
-        task_template_repository=task_template_repository,
+        uow=memory_uow,
     )
 
     command = UpdateTaskTemplateCommand(
@@ -58,8 +60,9 @@ async def test_update_task_template_handler_updates_and_saves_template(
 
     await handler.handle(command)
 
-    updated_template = await task_template_repository.get_by_id(task_template.id)
+    updated_template = await memory_task_template_repository.get_by_id(task_template.id)
 
+    assert updated_template
     assert updated_template.title == new_title
     assert updated_template.description == new_description
     assert updated_template.updated_at > task_template.created_at
@@ -84,12 +87,12 @@ async def test_update_task_template_handler_updates_and_saves_template(
     (WeeklyTriggerFactory.build(weekdays=frozenset([Weekday.MONDAY])),),
 )
 async def test_update_task_template_not_found(
+    memory_uow: MemoryUnitOfWork,
     trigger_payload: TriggerPayload,
 ):
-    task_template_repository = MemoryTaskTemplateRepository()
 
     handler = UpdateTaskTemplateHandler(
-        task_template_repository=task_template_repository,
+        uow=memory_uow,
     )
 
     command = UpdateTaskTemplateCommand(

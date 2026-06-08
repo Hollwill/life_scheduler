@@ -12,12 +12,12 @@ from tests.factories.task_instance import TaskInstanceFactory
 
 @pytest.mark.parametrize("task_instance", (TaskInstanceFactory.build(),))
 async def test_memory_task_instance_repository_save_and_get(
+    memory_task_instance_repository: MemoryTaskInstanceRepository,
     task_instance: TaskInstance,
 ):
-    repo = MemoryTaskInstanceRepository()
 
-    await repo.save(task_instance)
-    retrieved = await repo.get_by_id(task_instance.id)
+    await memory_task_instance_repository.save(task_instance)
+    retrieved = await memory_task_instance_repository.get_by_id(task_instance.id)
 
     assert retrieved is not None
     assert retrieved.id == task_instance.id
@@ -25,9 +25,10 @@ async def test_memory_task_instance_repository_save_and_get(
     assert retrieved is not task_instance  # Deepcopy check
 
 
-async def test_memory_task_instance_repository_get_none():
-    repo = MemoryTaskInstanceRepository()
-    retrieved = await repo.get_by_id(uuid.uuid4())
+async def test_memory_task_instance_repository_get_none(
+    memory_task_instance_repository: MemoryTaskInstanceRepository,
+):
+    retrieved = await memory_task_instance_repository.get_by_id(uuid.uuid4())
     assert retrieved is None
 
 
@@ -39,27 +40,26 @@ async def test_memory_task_instance_repository_get_none():
     ],
 )
 async def test_memory_task_instance_repository_deepcopy_isolation(
+    memory_task_instance_repository: MemoryTaskInstanceRepository,
     task_instance: TaskInstance,
     title_to_change: str,
 ):
     task_instance_title = task_instance.title
 
-    repo = MemoryTaskInstanceRepository()
-
-    await repo.save(task_instance)
+    await memory_task_instance_repository.save(task_instance)
 
     # Change original object
     task_instance.title = title_to_change
 
     # Check that repo still has the original data
-    retrieved = await repo.get_by_id(task_instance.id)
+    retrieved = await memory_task_instance_repository.get_by_id(task_instance.id)
     assert retrieved.title == task_instance_title
 
     # Change retrieved object
     retrieved.title = title_to_change
 
     # Check that repo still has the original data
-    retrieved_again = await repo.get_by_id(task_instance.id)
+    retrieved_again = await memory_task_instance_repository.get_by_id(task_instance.id)
     assert retrieved_again.title == task_instance_title
 
 
@@ -97,15 +97,15 @@ async def test_memory_task_instance_repository_deepcopy_isolation(
 )
 @pytest.mark.parametrize("search_by_day", (datetime.date.fromisoformat("2021-01-10"),))
 async def test_memory_task_instance_get_all_by_day(
+    memory_task_instance_repository: MemoryTaskInstanceRepository,
     task_instances: tuple[TaskInstance, ...],
     expected_ids_in_result: tuple[str, ...],
     search_by_day: datetime.date,
 ):
-    repo = MemoryTaskInstanceRepository()
     for task_instance in task_instances:
-        await repo.save(task_instance)
+        await memory_task_instance_repository.save(task_instance)
 
-    result = await repo.get_all_by_day(day=search_by_day)
+    result = await memory_task_instance_repository.get_all_by_day(day=search_by_day)
 
     ids_in_result = {task_instance.id for task_instance in result}
     assert ids_in_result == set(expected_ids_in_result)

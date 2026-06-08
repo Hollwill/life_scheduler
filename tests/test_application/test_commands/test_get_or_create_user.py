@@ -3,15 +3,19 @@ import pytest
 from application.user.commands import GetOrCreateUserCommand, GetOrCreateUserHandler
 from domain.user.aggregate import User
 from infrastructure.memory.repositories import MemoryUserRepository
+from infrastructure.memory.unit_of_work import MemoryUnitOfWork
 from tests.factories.user import UserFactory
 
 
 @pytest.mark.parametrize("user", (UserFactory.build(),))
-async def test_get_or_create_user(user: User):
-    user_repository = MemoryUserRepository()
-    await user_repository.save(user)
+async def test_get_or_create_user(
+    memory_uow: MemoryUnitOfWork,
+    memory_user_repository: MemoryUserRepository,
+    user: User,
+):
+    await memory_user_repository.save(user)
 
-    handler = GetOrCreateUserHandler(user_repository=user_repository)
+    handler = GetOrCreateUserHandler(uow=memory_uow)
 
     command = GetOrCreateUserCommand(
         telegram_user_id=user.telegram_user_id, name=user.name
@@ -27,16 +31,20 @@ async def test_get_or_create_user(user: User):
     "name",
     ("Test User", None),
 )
-async def test_get_or_create_user_user_created(telegram_user_id: int, name: str | None):
-    user_repository = MemoryUserRepository()
+async def test_get_or_create_user_user_created(
+    memory_uow: MemoryUnitOfWork,
+    memory_user_repository: MemoryUserRepository,
+    telegram_user_id: int,
+    name: str | None,
+):
 
-    handler = GetOrCreateUserHandler(user_repository=user_repository)
+    handler = GetOrCreateUserHandler(uow=memory_uow)
 
     command = GetOrCreateUserCommand(telegram_user_id=telegram_user_id, name=name)
 
     result = await handler.handle(command)
 
-    user = await user_repository.get_by_id(result)
+    user = await memory_user_repository.get_by_id(result)
 
     assert user is not None
     assert user.telegram_user_id == telegram_user_id

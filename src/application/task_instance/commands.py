@@ -1,8 +1,8 @@
 import dataclasses
 
 from application.common.base import CommandHandler
+from application.common.unit_of_work import UnitOfWork
 from application.task_instance.exceptions import TaskInstanceNotFoundException
-from domain.task_instance.repository import TaskInstanceRepository
 
 
 @dataclasses.dataclass
@@ -11,18 +11,19 @@ class CompleteTaskInstanceCommand:
 
 
 class CompleteTaskInstanceHandler(CommandHandler[CompleteTaskInstanceCommand, None]):
-    def __init__(self, task_instance_repository: TaskInstanceRepository) -> None:
-        self.task_instance_repository = task_instance_repository
+    def __init__(self, uow: UnitOfWork) -> None:
+        self.uow = uow
 
     async def handle(self, command: CompleteTaskInstanceCommand) -> None:
-        task_instance = await self.task_instance_repository.get_by_public_id(
-            command.task_instance_public_id
-        )
-        if not task_instance:
-            raise TaskInstanceNotFoundException(
-                {"task_instance_public_id": command.task_instance_public_id}
+        async with self.uow:
+            task_instance = await self.uow.task_instances.get_by_public_id(
+                command.task_instance_public_id
             )
+            if not task_instance:
+                raise TaskInstanceNotFoundException(
+                    {"task_instance_public_id": command.task_instance_public_id}
+                )
 
-        task_instance.complete()
+            task_instance.complete()
 
-        await self.task_instance_repository.save(task_instance)
+            await self.uow.task_instances.save(task_instance)

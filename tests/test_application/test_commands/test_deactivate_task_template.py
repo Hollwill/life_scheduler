@@ -11,6 +11,7 @@ from domain.task_template.aggregate import TaskTemplate
 from infrastructure.memory.repositories.memory_task_template_repository import (
     MemoryTaskTemplateRepository,
 )
+from infrastructure.memory.unit_of_work import MemoryUnitOfWork
 from tests.factories.task_template import TaskTemplateFactory
 
 
@@ -20,15 +21,14 @@ from tests.factories.task_template import TaskTemplateFactory
 )
 async def test_deactivate_task_template_handler(
     task_template: TaskTemplate,
+    memory_uow: MemoryUnitOfWork,
+    memory_task_template_repository: MemoryTaskTemplateRepository,
     now: datetime.datetime,
 ):
-    task_template_repository = MemoryTaskTemplateRepository()
 
-    await task_template_repository.save(task_template)
+    await memory_task_template_repository.save(task_template)
 
-    handler = DeactivateTaskTemplateHandler(
-        task_template_repository=task_template_repository,
-    )
+    handler = DeactivateTaskTemplateHandler(uow=memory_uow)
 
     command = DeactivateTaskTemplateCommand(
         task_template_public_id=task_template.public_id,
@@ -37,19 +37,18 @@ async def test_deactivate_task_template_handler(
 
     await handler.handle(command)
 
-    updated_template = await task_template_repository.get_by_id(task_template.id)
+    updated_template = await memory_task_template_repository.get_by_id(task_template.id)
 
+    assert updated_template
     assert updated_template.is_active is False
 
 
 async def test_deactivate_task_template_not_found(
+    memory_uow: MemoryUnitOfWork,
     now: datetime.datetime,
 ):
-    task_template_repository = MemoryTaskTemplateRepository()
 
-    handler = DeactivateTaskTemplateHandler(
-        task_template_repository=task_template_repository,
-    )
+    handler = DeactivateTaskTemplateHandler(uow=memory_uow)
 
     command = DeactivateTaskTemplateCommand(task_template_public_id="00000000", now=now)
 

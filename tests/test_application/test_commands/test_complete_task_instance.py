@@ -9,6 +9,7 @@ from application.task_instance.commands import (
 from application.task_instance.exceptions import TaskInstanceNotFoundException
 from domain.task_instance.aggregate import TaskInstance, TaskStatus
 from infrastructure.memory.repositories import MemoryTaskInstanceRepository
+from infrastructure.memory.unit_of_work import MemoryUnitOfWork
 from tests.factories.task_instance import TaskInstanceFactory
 
 
@@ -18,14 +19,15 @@ from tests.factories.task_instance import TaskInstanceFactory
 )
 async def test_complete_task_instance_handler(
     task_instance: TaskInstance,
+    memory_uow: MemoryUnitOfWork,
+    memory_task_instance_repository: MemoryTaskInstanceRepository,
     now: datetime.datetime,
 ):
-    task_instance_repository = MemoryTaskInstanceRepository()
 
-    await task_instance_repository.save(task_instance)
+    await memory_task_instance_repository.save(task_instance)
 
     handler = CompleteTaskInstanceHandler(
-        task_instance_repository=task_instance_repository,
+        uow=memory_uow,
     )
 
     command = CompleteTaskInstanceCommand(
@@ -34,19 +36,19 @@ async def test_complete_task_instance_handler(
 
     await handler.handle(command)
 
-    updated_template = await task_instance_repository.get_by_id(task_instance.id)
+    updated_template = await memory_task_instance_repository.get_by_id(task_instance.id)
 
     assert updated_template
     assert updated_template.status is TaskStatus.COMPLETED
 
 
 async def test_complete_task_instance_not_found(
+    memory_uow: MemoryUnitOfWork,
     now: datetime.datetime,
 ):
-    task_instance_repository = MemoryTaskInstanceRepository()
 
     handler = CompleteTaskInstanceHandler(
-        task_instance_repository=task_instance_repository,
+        uow=memory_uow,
     )
 
     command = CompleteTaskInstanceCommand(task_instance_public_id="00000000")

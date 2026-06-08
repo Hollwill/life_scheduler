@@ -3,18 +3,16 @@ import datetime
 import uuid
 
 from application.common.base import CommandHandler
+from application.common.unit_of_work import UnitOfWork
 from application.task_template.exceptions import (
     TaskTemplateNotFoundException,
     UserNotFoundException,
 )
 from application.task_template.schemas import TriggerPayload
 from application.task_template.trigger_mapper import TriggerMapper
-from domain.task_instance.repository import TaskInstanceRepository
 from domain.task_instance.service import TaskGenerationService
 from domain.task_template.aggregate import TaskTemplate
-from domain.task_template.repository import TaskTemplateRepository
 from domain.user.aggregate import User
-from domain.user.repository import UserRepository
 
 
 @dataclasses.dataclass
@@ -29,25 +27,24 @@ class CreateTaskTemplateCommand:
 class CreateTaskTemplateHandler(CommandHandler[CreateTaskTemplateCommand, str]):
     def __init__(
         self,
-        task_template_repository: TaskTemplateRepository,
-        user_repository: UserRepository,
+        uow: UnitOfWork,
     ) -> None:
-        self.task_template_repository: TaskTemplateRepository = task_template_repository
-        self.user_repository: UserRepository = user_repository
+        self.uow: UnitOfWork = uow
 
     async def handle(self, command: CreateTaskTemplateCommand) -> str:
-        user: User | None = await self.user_repository.get_by_id(command.user_id)
-        if user is None:
-            raise UserNotFoundException({"user_id": command.user_id})
+        async with self.uow:
+            user: User | None = await self.uow.users.get_by_id(command.user_id)
+            if user is None:
+                raise UserNotFoundException({"user_id": command.user_id})
 
-        task_template = TaskTemplate.create(
-            user_id=user.id,
-            title=command.title,
-            description=command.description,
-            trigger=TriggerMapper.to_domain(command.trigger_payload),
-            now=command.now,
-        )
-        await self.task_template_repository.save(task_template)
+            task_template = TaskTemplate.create(
+                user_id=user.id,
+                title=command.title,
+                description=command.description,
+                trigger=TriggerMapper.to_domain(command.trigger_payload),
+                now=command.now,
+            )
+            await self.uow.task_templates.save(task_template)
         return task_template.public_id
 
 
@@ -63,27 +60,28 @@ class UpdateTaskTemplateCommand:
 class UpdateTaskTemplateHandler(CommandHandler[UpdateTaskTemplateCommand, None]):
     def __init__(
         self,
-        task_template_repository: TaskTemplateRepository,
+        uow: UnitOfWork,
     ) -> None:
-        self.task_template_repository: TaskTemplateRepository = task_template_repository
+        self.uow: UnitOfWork = uow
 
     async def handle(self, command: UpdateTaskTemplateCommand) -> None:
-        task_template = await self.task_template_repository.get_by_public_id(
-            command.task_template_public_id
-        )
-        if task_template is None:
-            raise TaskTemplateNotFoundException(
-                {"task_template_id": command.task_template_public_id}
+        async with self.uow:
+            task_template = await self.uow.task_templates.get_by_public_id(
+                command.task_template_public_id
+            )
+            if task_template is None:
+                raise TaskTemplateNotFoundException(
+                    {"task_template_id": command.task_template_public_id}
+                )
+
+            task_template.edit(
+                title=command.title,
+                description=command.description,
+                trigger=TriggerMapper.to_domain(command.trigger_payload),
+                now=command.now,
             )
 
-        task_template.edit(
-            title=command.title,
-            description=command.description,
-            trigger=TriggerMapper.to_domain(command.trigger_payload),
-            now=command.now,
-        )
-
-        await self.task_template_repository.save(task_template)
+            await self.uow.task_templates.save(task_template)
 
 
 @dataclasses.dataclass
@@ -97,24 +95,25 @@ class DeactivateTaskTemplateHandler(
 ):
     def __init__(
         self,
-        task_template_repository: TaskTemplateRepository,
+        uow: UnitOfWork,
     ) -> None:
-        self.task_template_repository: TaskTemplateRepository = task_template_repository
+        self.uow: UnitOfWork = uow
 
     async def handle(self, command: DeactivateTaskTemplateCommand) -> None:
-        task_template = await self.task_template_repository.get_by_public_id(
-            command.task_template_public_id
-        )
-        if task_template is None:
-            raise TaskTemplateNotFoundException(
-                {"task_template_id": command.task_template_public_id}
+        async with self.uow:
+            task_template = await self.uow.task_templates.get_by_public_id(
+                command.task_template_public_id
+            )
+            if task_template is None:
+                raise TaskTemplateNotFoundException(
+                    {"task_template_id": command.task_template_public_id}
+                )
+
+            task_template.deactivate(
+                now=command.now,
             )
 
-        task_template.deactivate(
-            now=command.now,
-        )
-
-        await self.task_template_repository.save(task_template)
+            await self.uow.task_templates.save(task_template)
 
 
 @dataclasses.dataclass
@@ -125,36 +124,34 @@ class GenerateTasksForDayCommand:
 class GenerateTasksForDayHandler(CommandHandler[GenerateTasksForDayCommand, None]):
     def __init__(
         self,
-        task_template_repository: TaskTemplateRepository,
-        task_instance_repository: TaskInstanceRepository,
+        uow: UnitOfWork,
         task_generation_service: TaskGenerationService,
         now: datetime.datetime,
     ) -> None:
-        self.task_template_repository = task_template_repository
-        self.task_instance_repository = task_instance_repository
+        self.uow = uow
         self.task_generation_service = task_generation_service
         self.now = now
 
     async def handle(self, command: GenerateTasksForDayCommand) -> None:
+        async with self.uow:
+            task_templates = await self.uow.task_templates.get_all_active()
 
-        task_templates = await self.task_template_repository.get_all_active()
-
-        today_task_instances = await self.task_instance_repository.get_all_by_day(
-            command.day
-        )
-
-        exists_template_ids_for_day = {
-            task_instance.task_template_id for task_instance in today_task_instances
-        }
-
-        for task_template in task_templates:
-            if task_template.id in exists_template_ids_for_day:
-                continue
-
-            task_instance = self.task_generation_service.generate_from_template(
-                task_template, day=command.day, now=self.now
+            today_task_instances = await self.uow.task_instances.get_all_by_day(
+                command.day
             )
-            if not task_instance:
-                continue
 
-            await self.task_instance_repository.save(task_instance)
+            exists_template_ids_for_day = {
+                task_instance.task_template_id for task_instance in today_task_instances
+            }
+
+            for task_template in task_templates:
+                if task_template.id in exists_template_ids_for_day:
+                    continue
+
+                task_instance = self.task_generation_service.generate_from_template(
+                    task_template, day=command.day, now=self.now
+                )
+                if not task_instance:
+                    continue
+
+                await self.uow.task_instances.save(task_instance)

@@ -58,14 +58,16 @@ from tests.factories.trigger import DailyTriggerFactory
     ),
 )
 async def test_get_task_templates(
+    memory_task_template_repository: MemoryTaskTemplateRepository,
     user_id: uuid.UUID,
     task_template: TaskTemplate,
     expected_response: list[TaskTemplateResponse],
 ):
-    repository = MemoryTaskTemplateRepository()
 
-    await repository.save(task_template)
+    await memory_task_template_repository.save(task_template)
 
-    handler = GetTaskTemplatesHandler(task_template_repository=repository)
+    handler = GetTaskTemplatesHandler(
+        task_template_repository=memory_task_template_repository
+    )
     response = await handler.handle(GetTaskTemplatesQuery(user_id=user_id))
     assert response == expected_response

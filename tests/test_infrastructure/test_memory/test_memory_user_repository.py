@@ -10,11 +10,12 @@ from tests.factories.user import UserFactory
 
 
 @pytest.mark.parametrize("user", (UserFactory.build(),))
-async def test_memory_user_repository_save_and_get(user: User):
-    repo = MemoryUserRepository()
+async def test_memory_user_repository_save_and_get(
+    memory_user_repository: MemoryUserRepository, user: User
+):
 
-    await repo.save(user)
-    retrieved = await repo.get_by_id(user.id)
+    await memory_user_repository.save(user)
+    retrieved = await memory_user_repository.get_by_id(user.id)
 
     assert retrieved is not None
     assert retrieved.id == user.id
@@ -23,9 +24,10 @@ async def test_memory_user_repository_save_and_get(user: User):
     assert retrieved is not user  # Deepcopy check
 
 
-async def test_memory_user_repository_get_none():
-    repo = MemoryUserRepository()
-    retrieved = await repo.get_by_id(uuid.uuid4())
+async def test_memory_user_repository_get_none(
+    memory_user_repository: MemoryUserRepository,
+):
+    retrieved = await memory_user_repository.get_by_id(uuid.uuid4())
     assert retrieved is None
 
 
@@ -35,23 +37,22 @@ async def test_memory_user_repository_get_none():
     ("Changed Name",),
 )
 async def test_memory_user_repository_deepcopy_isolation(
-    user: User, name_to_change: str
+    memory_user_repository: MemoryUserRepository, user: User, name_to_change: str
 ):
     user_name = user.name
-    repo = MemoryUserRepository()
 
-    await repo.save(user)
+    await memory_user_repository.save(user)
 
     # Change original object
     user.name = name_to_change
 
     # Check that repo still has the original data
-    retrieved = await repo.get_by_id(user.id)
+    retrieved = await memory_user_repository.get_by_id(user.id)
     assert retrieved.name == user_name
 
     # Change retrieved object
     retrieved.name = name_to_change
 
     # Check that repo still has the original data
-    retrieved_again = await repo.get_by_id(user.id)
+    retrieved_again = await memory_user_repository.get_by_id(user.id)
     assert retrieved_again.name == user_name

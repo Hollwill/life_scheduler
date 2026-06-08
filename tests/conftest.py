@@ -19,6 +19,14 @@ from infrastructure.database.repositories.task_template import (
     SqlAlchemyTaskTemplateRepository,
 )
 from infrastructure.database.repositories.user import SqlAlchemyUserRepository
+from infrastructure.database.unit_of_work import SqlAlchemyUnitOfWork
+from infrastructure.memory.database import MemoryDatabase
+from infrastructure.memory.repositories import (
+    MemoryTaskInstanceRepository,
+    MemoryTaskTemplateRepository,
+    MemoryUserRepository,
+)
+from infrastructure.memory.unit_of_work import MemoryUnitOfWork
 
 
 @pytest.fixture
@@ -67,6 +75,35 @@ async def session(
 
 
 @pytest.fixture
+def db_memory() -> MemoryDatabase:
+    return MemoryDatabase()
+
+
+@pytest.fixture
+def memory_task_template_repository(
+    db_memory: MemoryDatabase,
+) -> MemoryTaskTemplateRepository:
+    return MemoryTaskTemplateRepository(db_memory)
+
+
+@pytest.fixture
+def memory_task_instance_repository(
+    db_memory: MemoryDatabase,
+) -> MemoryTaskInstanceRepository:
+    return MemoryTaskInstanceRepository(db_memory)
+
+
+@pytest.fixture
+def memory_user_repository(db_memory: MemoryDatabase) -> MemoryUserRepository:
+    return MemoryUserRepository(db_memory)
+
+
+@pytest.fixture
+async def memory_uow(db_memory: MemoryDatabase):
+    return MemoryUnitOfWork(db_memory)
+
+
+@pytest.fixture
 def task_template_database_repository(
     session: AsyncSession,
 ) -> SqlAlchemyTaskTemplateRepository:
@@ -83,3 +120,10 @@ def task_instance_database_repository(
 @pytest.fixture
 def user_database_repository(session: AsyncSession) -> SqlAlchemyUserRepository:
     return SqlAlchemyUserRepository(session)
+
+
+@pytest.fixture
+async def sqlalchemy_uow(session_factory: async_sessionmaker[AsyncSession]):
+    async with SqlAlchemyUnitOfWork(session_factory) as uow:
+        yield uow
+        await uow.rollback()

@@ -66,16 +66,16 @@ from tests.factories.task_instance import TaskInstanceFactory
 )
 async def test_get_task_instances(
     user_id: uuid.UUID,
+    memory_task_instance_repository: MemoryTaskInstanceRepository,
     day: datetime.date,
     task_instance: TaskInstance,
     expected_response: list[TaskInstanceResponse],
 ):
-    repository = MemoryTaskInstanceRepository()
 
-    await repository.save(task_instance)
+    await memory_task_instance_repository.save(task_instance)
 
     handler = GetTaskInstancesHandler(
-        task_instance_repository=repository,
+        task_instance_repository=memory_task_instance_repository,
     )
 
     response = await handler.handle(
