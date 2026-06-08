@@ -3,14 +3,13 @@ import datetime
 
 from dishka import Scope
 
+from application.common.unit_of_work import UnitOfWork
 from application.task_template.commands import (
     GenerateTasksForDayCommand,
     GenerateTasksForDayHandler,
 )
 from composition.container import container
-from domain.task_instance.repository import TaskInstanceRepository
 from domain.task_instance.service import TaskGenerationService
-from domain.task_template.repository import TaskTemplateRepository
 
 
 async def main():
@@ -18,12 +17,7 @@ async def main():
         now = datetime.datetime.now()
 
         handler = GenerateTasksForDayHandler(
-            task_template_repository=await request_container.get(
-                TaskTemplateRepository
-            ),
-            task_instance_repository=await request_container.get(
-                TaskInstanceRepository
-            ),
+            uow=await request_container.get(UnitOfWork),
             task_generation_service=await request_container.get(TaskGenerationService),
             now=now,
         )
