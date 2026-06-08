@@ -104,21 +104,21 @@ async def memory_uow(db_memory: MemoryDatabase):
 
 
 @pytest.fixture
-def task_template_database_repository(
+def sqlalchemy_task_template_repository(
     session: AsyncSession,
 ) -> SqlAlchemyTaskTemplateRepository:
     return SqlAlchemyTaskTemplateRepository(session)
 
 
 @pytest.fixture
-def task_instance_database_repository(
+def sqlalchemy_task_instance_repository(
     session: AsyncSession,
 ) -> SqlAlchemyTaskInstanceRepository:
     return SqlAlchemyTaskInstanceRepository(session)
 
 
 @pytest.fixture
-def user_database_repository(session: AsyncSession) -> SqlAlchemyUserRepository:
+def sqlalchemy_user_repository(session: AsyncSession) -> SqlAlchemyUserRepository:
     return SqlAlchemyUserRepository(session)
 
 

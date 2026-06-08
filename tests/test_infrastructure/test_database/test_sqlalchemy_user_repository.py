@@ -8,13 +8,13 @@ from tests.factories.user import UserFactory
 @pytest.mark.parametrize("user", (UserFactory.build(),))
 async def test_save_user(
     user: User,
-    user_database_repository: SqlAlchemyUserRepository,
+    sqlalchemy_user_repository: SqlAlchemyUserRepository,
 ):
-    await user_database_repository.save(
+    await sqlalchemy_user_repository.save(
         user,
     )
 
-    loaded = await user_database_repository.get_by_id(
+    loaded = await sqlalchemy_user_repository.get_by_id(
         user.id,
     )
 

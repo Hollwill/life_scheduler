@@ -26,14 +26,14 @@ from tests.factories.trigger import (
 
 @pytest.mark.parametrize("task_template", (TaskTemplateFactory.build(),))
 async def test_save_task_template(
-    task_template_database_repository: SqlAlchemyTaskTemplateRepository,
+    sqlalchemy_task_template_repository: SqlAlchemyTaskTemplateRepository,
     task_template: TaskTemplate,
 ):
-    await task_template_database_repository.save(
+    await sqlalchemy_task_template_repository.save(
         task_template,
     )
 
-    loaded = await task_template_database_repository.get_by_id(
+    loaded = await sqlalchemy_task_template_repository.get_by_id(
         task_template.id,
     )
 
@@ -48,13 +48,15 @@ async def test_save_task_template(
     "task_template", (TaskTemplateFactory.build(public_id="12345678"),)
 )
 async def test_get_by_public_id_task_template(
-    task_template_database_repository: SqlAlchemyTaskTemplateRepository,
+    sqlalchemy_task_template_repository: SqlAlchemyTaskTemplateRepository,
     public_id: str,
     task_template: TaskTemplate,
 ):
-    await task_template_database_repository.save(task_template)
+    await sqlalchemy_task_template_repository.save(task_template)
 
-    task_template = await task_template_database_repository.get_by_public_id(public_id)
+    task_template = await sqlalchemy_task_template_repository.get_by_public_id(
+        public_id
+    )
     assert task_template is not None
     assert task_template.id == task_template.id
     assert task_template.title == task_template.title
@@ -62,9 +64,9 @@ async def test_get_by_public_id_task_template(
 
 
 async def test_get_task_template_by_unknown_id_returns_none(
-    task_template_database_repository: SqlAlchemyTaskTemplateRepository,
+    sqlalchemy_task_template_repository: SqlAlchemyTaskTemplateRepository,
 ):
-    loaded = await task_template_database_repository.get_by_id(
+    loaded = await sqlalchemy_task_template_repository.get_by_id(
         uuid.uuid4(),
     )
 
@@ -104,15 +106,15 @@ async def test_get_task_template_by_unknown_id_returns_none(
     ),
 )
 async def test_get_all_active_by_user(
-    task_template_database_repository: SqlAlchemyTaskTemplateRepository,
+    sqlalchemy_task_template_repository: SqlAlchemyTaskTemplateRepository,
     user_id: uuid.UUID,
     task_template: TaskTemplate,
     should_return: bool,
 ):
-    await task_template_database_repository.save(
+    await sqlalchemy_task_template_repository.save(
         task_template,
     )
-    templates = await task_template_database_repository.get_all_active_by_user(
+    templates = await sqlalchemy_task_template_repository.get_all_active_by_user(
         user_id=user_id
     )
 
@@ -124,7 +126,7 @@ async def test_get_all_active_by_user(
 
 
 async def test_get_all_active_returns_only_active_templates(
-    task_template_database_repository: SqlAlchemyTaskTemplateRepository,
+    sqlalchemy_task_template_repository: SqlAlchemyTaskTemplateRepository,
 ):
     active = TaskTemplateFactory.build(
         is_active=True,
@@ -134,14 +136,14 @@ async def test_get_all_active_returns_only_active_templates(
         is_active=False,
     )
 
-    await task_template_database_repository.save(
+    await sqlalchemy_task_template_repository.save(
         active,
     )
-    await task_template_database_repository.save(
+    await sqlalchemy_task_template_repository.save(
         inactive,
     )
 
-    templates = await task_template_database_repository.get_all_active()
+    templates = await sqlalchemy_task_template_repository.get_all_active()
 
     assert len(templates) == 1
     assert next(iter(templates)).id == active.id
@@ -150,12 +152,12 @@ async def test_get_all_active_returns_only_active_templates(
 @pytest.mark.parametrize("task_template", (TaskTemplateFactory.build(),))
 @pytest.mark.parametrize("new_title", ("Updated title",))
 async def test_save_updates_existing_template(
-    task_template_database_repository: SqlAlchemyTaskTemplateRepository,
+    sqlalchemy_task_template_repository: SqlAlchemyTaskTemplateRepository,
     task_template: TaskTemplate,
     new_title: str,
     now,
 ):
-    await task_template_database_repository.save(
+    await sqlalchemy_task_template_repository.save(
         task_template,
     )
 
@@ -164,11 +166,11 @@ async def test_save_updates_existing_template(
         now,
     )
 
-    await task_template_database_repository.save(
+    await sqlalchemy_task_template_repository.save(
         task_template,
     )
 
-    loaded = await task_template_database_repository.get_by_id(
+    loaded = await sqlalchemy_task_template_repository.get_by_id(
         task_template.id,
     )
 
@@ -202,16 +204,16 @@ async def test_save_updates_existing_template(
     ),
 )
 async def test_save_and_load_triggers(
-    task_template_database_repository: SqlAlchemyTaskTemplateRepository,
+    sqlalchemy_task_template_repository: SqlAlchemyTaskTemplateRepository,
     trigger: Trigger,
     expected_trigger_type: type[Trigger],
 ):
 
     template = TaskTemplateFactory.build(trigger=trigger)
 
-    await task_template_database_repository.save(template)
+    await sqlalchemy_task_template_repository.save(template)
 
-    loaded = await task_template_database_repository.get_by_id(
+    loaded = await sqlalchemy_task_template_repository.get_by_id(
         template.id,
     )
 

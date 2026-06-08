@@ -14,14 +14,14 @@ from tests.factories.task_instance import TaskInstanceFactory
 
 @pytest.mark.parametrize("task_instance", (TaskInstanceFactory.build(),))
 async def test_save_task_instance(
-    task_instance_database_repository: SqlAlchemyTaskInstanceRepository,
+    sqlalchemy_task_instance_repository: SqlAlchemyTaskInstanceRepository,
     task_instance: TaskInstance,
 ):
-    await task_instance_database_repository.save(
+    await sqlalchemy_task_instance_repository.save(
         task_instance,
     )
 
-    loaded = await task_instance_database_repository.get_by_id(
+    loaded = await sqlalchemy_task_instance_repository.get_by_id(
         task_instance.id,
     )
 
@@ -35,14 +35,14 @@ async def test_save_task_instance(
     "task_instance", (TaskInstanceFactory.build(public_id="00000000"),)
 )
 async def test_task_instance_get_by_public_id(
-    task_instance_database_repository: SqlAlchemyTaskInstanceRepository,
+    sqlalchemy_task_instance_repository: SqlAlchemyTaskInstanceRepository,
     task_instance: TaskInstance,
 ):
-    await task_instance_database_repository.save(
+    await sqlalchemy_task_instance_repository.save(
         task_instance,
     )
 
-    loaded = await task_instance_database_repository.get_by_public_id(
+    loaded = await sqlalchemy_task_instance_repository.get_by_public_id(
         task_instance.public_id,
     )
 
@@ -70,26 +70,26 @@ async def test_task_instance_get_by_public_id(
     ),
 )
 async def test_duplicate_task_instance_error(
-    task_instance_database_repository: SqlAlchemyTaskInstanceRepository,
+    sqlalchemy_task_instance_repository: SqlAlchemyTaskInstanceRepository,
     original_task_instance: TaskInstance,
     duplicated_task_instance: TaskInstance,
     session: AsyncSession,
 ):
-    await task_instance_database_repository.save(
+    await sqlalchemy_task_instance_repository.save(
         original_task_instance,
     )
 
     with pytest.raises(IntegrityError):
-        await task_instance_database_repository.save(
+        await sqlalchemy_task_instance_repository.save(
             duplicated_task_instance,
         )
         await session.flush()
 
 
 async def test_get_task_instance_by_unknown_id_returns_none(
-    task_instance_database_repository: SqlAlchemyTaskInstanceRepository,
+    sqlalchemy_task_instance_repository: SqlAlchemyTaskInstanceRepository,
 ):
-    loaded = await task_instance_database_repository.get_by_id(
+    loaded = await sqlalchemy_task_instance_repository.get_by_id(
         uuid.uuid4(),
     )
 
@@ -114,21 +114,21 @@ async def test_get_task_instance_by_unknown_id_returns_none(
     ),
 )
 async def test_get_all_by_day(
-    task_instance_database_repository: SqlAlchemyTaskInstanceRepository,
+    sqlalchemy_task_instance_repository: SqlAlchemyTaskInstanceRepository,
     target_day: datetime.date,
     matching_task_instance: TaskInstance,
     other_task_instance: TaskInstance,
 ):
 
-    await task_instance_database_repository.save(
+    await sqlalchemy_task_instance_repository.save(
         matching_task_instance,
     )
 
-    await task_instance_database_repository.save(
+    await sqlalchemy_task_instance_repository.save(
         other_task_instance,
     )
 
-    instances = await task_instance_database_repository.get_all_by_day(
+    instances = await sqlalchemy_task_instance_repository.get_all_by_day(
         target_day,
     )
 
@@ -168,22 +168,22 @@ async def test_get_all_by_day(
     ),
 )
 async def test_get_all_by_user_per_day(
-    task_instance_database_repository: SqlAlchemyTaskInstanceRepository,
+    sqlalchemy_task_instance_repository: SqlAlchemyTaskInstanceRepository,
     user_id: uuid.UUID,
     target_day: datetime.date,
     matching_task_instance: TaskInstance,
     other_task_instance: TaskInstance,
 ):
 
-    await task_instance_database_repository.save(
+    await sqlalchemy_task_instance_repository.save(
         matching_task_instance,
     )
 
-    await task_instance_database_repository.save(
+    await sqlalchemy_task_instance_repository.save(
         other_task_instance,
     )
 
-    instances = await task_instance_database_repository.get_all_by_user_per_day(
+    instances = await sqlalchemy_task_instance_repository.get_all_by_user_per_day(
         user_id,
         target_day,
     )
