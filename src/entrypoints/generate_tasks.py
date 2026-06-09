@@ -2,6 +2,7 @@ import asyncio
 import datetime
 
 from dishka import Scope
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from application.common.unit_of_work import UnitOfWork
 from application.task_template.commands import (
@@ -10,6 +11,7 @@ from application.task_template.commands import (
 )
 from composition.container import container
 from domain.task_instance.service import TaskGenerationService
+from infrastructure.database.init_db import init_db
 
 
 async def main():
@@ -21,6 +23,10 @@ async def main():
             task_generation_service=await request_container.get(TaskGenerationService),
             now=now,
         )
+
+        engine = await container.get(AsyncEngine)
+
+        await init_db(engine)
 
         await handler.handle(GenerateTasksForDayCommand(day=now.date()))
 

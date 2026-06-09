@@ -5,8 +5,6 @@ import factory
 
 from domain.common.utils import generate_public_id
 from domain.task_instance.aggregate import TaskInstance, TaskStatus
-from tests.factories.task_template import TaskTemplateFactory
-from tests.factories.user import UserFactory
 
 
 class TaskInstanceFactory(factory.Factory):
@@ -17,12 +15,8 @@ class TaskInstanceFactory(factory.Factory):
 
     public_id = factory.LazyFunction(generate_public_id)
 
-    task_template = factory.SubFactory(TaskTemplateFactory)
-
-    user = factory.SubFactory(UserFactory)
-
-    task_template_id = factory.SelfAttribute("task_template.id")
-    user_id = factory.SelfAttribute("user.id")
+    task_template_id = factory.LazyFunction(uuid.uuid4)
+    user_id = factory.LazyFunction(uuid.uuid4)
 
     title = factory.Sequence(lambda n: f"Task Instance #{n}")
 
@@ -44,10 +38,3 @@ class TaskInstanceFactory(factory.Factory):
     status = TaskStatus.PENDING
 
     postpone_reason = None
-
-    @classmethod
-    def _build(cls, model_class, *args, **kwargs):
-        kwargs.pop("task_template", None)
-        kwargs.pop("user", None)
-
-        return model_class(*args, **kwargs)

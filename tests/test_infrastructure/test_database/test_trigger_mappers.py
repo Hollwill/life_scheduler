@@ -6,7 +6,7 @@ import pytest
 
 from domain.task_template.entities import Trigger
 from domain.task_template.value_objects import DayOfMonth, Month, TriggerType, Weekday
-from infrastructure.database.mappers import trigger_from_dict, trigger_to_dict
+from infrastructure.database.trigger_mapper import TriggerMapper
 from tests.factories.trigger import (
     DailyTriggerFactory,
     MonthlyTriggerFactory,
@@ -99,6 +99,6 @@ from tests.factories.trigger import (
 )
 def test_trigger_to_dict(trigger: Trigger, dict_trigger_representation: dict[str, Any]):
 
-    assert trigger_to_dict(trigger) == dict_trigger_representation
+    assert TriggerMapper.trigger_to_dict(trigger) == dict_trigger_representation
 
-    assert trigger_from_dict(dict_trigger_representation) == trigger
+    assert TriggerMapper.trigger_from_dict(dict_trigger_representation) == trigger

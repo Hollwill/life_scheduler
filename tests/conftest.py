@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from testcontainers.postgres import PostgresContainer
 
-from infrastructure.database.base import Base
+from infrastructure.database.init_db import init_db
 from infrastructure.database.repositories.task_instance import (
     SqlAlchemyTaskInstanceRepository,
 )
@@ -36,7 +36,7 @@ def now() -> datetime.datetime:
 
 @pytest.fixture(scope="session", autouse=True)
 def postgres_container() -> Generator[PostgresContainer, Any, None]:
-    with PostgresContainer("postgres:18") as postgres:
+    with PostgresContainer("postgres:18-alpine") as postgres:
         yield postgres
 
 
@@ -47,9 +47,7 @@ async def engine(
     engine = create_async_engine(
         postgres_container.get_connection_url(driver="asyncpg"),
     )
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    await init_db(engine)
 
     yield engine
 

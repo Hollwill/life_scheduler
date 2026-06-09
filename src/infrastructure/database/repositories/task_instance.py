@@ -7,8 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.task_instance.aggregate import TaskInstance
 from domain.task_instance.repository import TaskInstanceRepository
-from infrastructure.database.mappers import task_instance_from_orm, task_instance_to_orm
-from infrastructure.database.models import TaskInstanceModel
+from infrastructure.database.orm import task_instance_table
 
 
 class SqlAlchemyTaskInstanceRepository(TaskInstanceRepository):
@@ -17,59 +16,36 @@ class SqlAlchemyTaskInstanceRepository(TaskInstanceRepository):
 
     async def get_by_id(self, task_instance_id: uuid.UUID) -> TaskInstance | None:
         result = await self.session.execute(
-            select(TaskInstanceModel).where(TaskInstanceModel.id == task_instance_id)
+            select(TaskInstance).where(task_instance_table.c.id == task_instance_id)
         )
-        instance = result.scalars().first()
-        if instance is None:
-            return None
-
-        return task_instance_from_orm(instance)
+        return result.scalars().first()
 
     async def get_by_public_id(
         self, task_instance_public_id: str
     ) -> TaskInstance | None:
         result = await self.session.execute(
-            select(TaskInstanceModel).where(
-                TaskInstanceModel.public_id == task_instance_public_id
+            select(TaskInstance).where(
+                task_instance_table.c.public_id == task_instance_public_id
             )
         )
-        instance = result.scalars().first()
-        if instance is None:
-            return None
-
-        return task_instance_from_orm(instance)
+        return result.scalars().first()
 
     async def save(self, task_instance: TaskInstance) -> None:
-        instance = await self.session.get(TaskInstanceModel, task_instance.id)
-
-        if instance is None:
-            instance = task_instance_to_orm(task_instance)
-            self.session.add(instance)
-            return
-
-        instance.user_id = task_instance.user_id
-        instance.task_template_id = task_instance.task_template_id
-        instance.title = task_instance.title
-        instance.description = task_instance.description
-        instance.occurrence_date = task_instance.occurrence_date
-        instance.scheduled_at = task_instance.scheduled_at
-        instance.status = task_instance.status
-        instance.created_at = task_instance.created_at
-        instance.postpone_reason = task_instance.postpone_reason
+        self.session.add(task_instance)
 
     async def get_all_by_day(
         self, day: datetime.date
     ) -> collections.abc.Collection[TaskInstance]:
-        stmt = select(TaskInstanceModel).where(TaskInstanceModel.occurrence_date == day)
+        stmt = select(TaskInstance).where(task_instance_table.c.occurrence_date == day)
         result = await self.session.execute(stmt)
-        return [task_instance_from_orm(orm) for orm in result.scalars()]
+        return list(result.scalars())
 
     async def get_all_by_user_per_day(
         self, user_id: uuid.UUID, day: datetime.date
     ) -> collections.abc.Collection[TaskInstance]:
-        stmt = select(TaskInstanceModel).where(
-            TaskInstanceModel.occurrence_date == day,
-            TaskInstanceModel.user_id == user_id,
+        stmt = select(TaskInstance).where(
+            task_instance_table.c.occurrence_date == day,
+            task_instance_table.c.user_id == user_id,
         )
         result = await self.session.execute(stmt)
-        return [task_instance_from_orm(orm) for orm in result.scalars()]
+        return list(result.scalars())
