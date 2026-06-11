@@ -16,7 +16,7 @@ from infrastructure.database.init_db import init_db
 
 async def main():
     async with container(scope=Scope.REQUEST) as request_container:
-        now = datetime.datetime.now()
+        now = datetime.datetime.now(tz=datetime.UTC)
 
         handler = GenerateTasksForDayHandler(
             uow=await request_container.get(UnitOfWork),
