@@ -56,7 +56,7 @@ class MemoryTaskInstanceRepository(TaskInstanceRepository):
             for task_instance in self.db.task_instances.values()
             if task_instance.occurrence_date == now.date()
             and task_instance.scheduled_at
-            and task_instance.scheduled_at >= now
+            and task_instance.scheduled_at <= now
             and task_instance.status is TaskStatus.PENDING
             and task_instance.reminded_at is None
         ]

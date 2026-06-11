@@ -155,7 +155,7 @@ async def test_memory_task_instance_get_all_by_day(
                 status=TaskStatus.PENDING,
                 reminded_at=None,
             ),
-            True,
+            False,
         ),
         # scheduled_at раньше now
         (
@@ -165,7 +165,7 @@ async def test_memory_task_instance_get_all_by_day(
                 status=TaskStatus.PENDING,
                 reminded_at=None,
             ),
-            False,
+            True,
         ),
         # уже напомнили
         (

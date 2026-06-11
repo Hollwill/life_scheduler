@@ -236,7 +236,7 @@ async def test_get_all_by_user_per_day(
                 status=TaskStatus.PENDING,
                 reminded_at=None,
             ),
-            True,
+            False,
         ),
         # scheduled_at раньше now
         (
@@ -246,7 +246,7 @@ async def test_get_all_by_user_per_day(
                 status=TaskStatus.PENDING,
                 reminded_at=None,
             ),
-            False,
+            True,
         ),
         # уже напомнили
         (

@@ -56,7 +56,7 @@ class SqlAlchemyTaskInstanceRepository(TaskInstanceRepository):
         stmt = select(TaskInstance).where(
             task_instance_table.c.occurrence_date == now.date(),
             task_instance_table.c.scheduled_at.isnot(None),
-            task_instance_table.c.scheduled_at >= now,
+            task_instance_table.c.scheduled_at <= now,
             task_instance_table.c.status == TaskStatus.PENDING,
             task_instance_table.c.reminded_at.is_(None),
         )
