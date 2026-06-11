@@ -9,7 +9,9 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from application.common.unit_of_work import UnitOfWork
-from application.task_instance.commands import CompleteTaskInstanceHandler
+from application.task_instance.commands import (
+    CompleteTaskInstanceHandler,
+)
 from application.task_instance.queries import GetTaskInstancesHandler
 from application.task_template.commands import (
     CreateTaskTemplateHandler,

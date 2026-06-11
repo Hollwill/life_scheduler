@@ -1,7 +1,9 @@
+import datetime
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from domain.task_instance.aggregate import TaskInstance
+from domain.task_instance.aggregate import TaskInstance, TaskStatus
 from infrastructure.database.unit_of_work import SqlAlchemyUnitOfWork
 from tests.factories.task_instance import TaskInstanceFactory
 
@@ -34,6 +36,30 @@ async def test_uow_commit_persists_task_instance(
 
     assert loaded is not None
     assert loaded.title == task_instance_title
+
+
+async def test_uow_domain_events_saving_to_outbox(
+    session_factory: async_sessionmaker[AsyncSession],
+    now: datetime.datetime,
+):
+    task_instance = TaskInstanceFactory.build(
+        status=TaskStatus.PENDING,
+        occurrence_date=now.date(),
+        scheduled_at=now - datetime.timedelta(minutes=1),
+        reminded_at=None,
+    )
+
+    async with SqlAlchemyUnitOfWork(session_factory) as sqlalchemy_uow:
+        task_instance.mark_reminded(now)
+        assert task_instance._events
+        domain_event = task_instance._events[0]
+
+        await sqlalchemy_uow.task_instances.save(task_instance)
+
+    async with SqlAlchemyUnitOfWork(session_factory) as sqlalchemy_uow:
+        outbox_instances = await sqlalchemy_uow.outbox.get_unprocessed()
+        assert len(outbox_instances) == 1
+        assert outbox_instances[0].event_type == domain_event.event_type
 
 
 @pytest.mark.parametrize("task_instance", (TaskInstanceFactory.build(),))

@@ -5,7 +5,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from domain.task_instance.aggregate import TaskInstance
+from domain.task_instance.aggregate import TaskInstance, TaskStatus
 from domain.task_instance.repository import TaskInstanceRepository
 from infrastructure.database.orm import task_instance_table
 
@@ -46,6 +46,19 @@ class SqlAlchemyTaskInstanceRepository(TaskInstanceRepository):
         stmt = select(TaskInstance).where(
             task_instance_table.c.occurrence_date == day,
             task_instance_table.c.user_id == user_id,
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars())
+
+    async def get_all_for_remind(
+        self, now: datetime.datetime
+    ) -> collections.abc.Collection[TaskInstance]:
+        stmt = select(TaskInstance).where(
+            task_instance_table.c.occurrence_date == now.date(),
+            task_instance_table.c.scheduled_at.isnot(None),
+            task_instance_table.c.scheduled_at >= now,
+            task_instance_table.c.status == TaskStatus.PENDING,
+            task_instance_table.c.reminded_at.is_(None),
         )
         result = await self.session.execute(stmt)
         return list(result.scalars())

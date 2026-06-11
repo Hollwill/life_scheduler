@@ -4,9 +4,12 @@ from enum import Enum
 
 from domain.common import AggregateRoot
 from domain.common.utils import generate_public_id
+from domain.task_instance.events import TaskReminderRequested
 from domain.task_instance.exceptions import (
     TaskInstanceInvalidPostponeDateException,
+    TaskInstanceInvalidReminderDateException,
     TaskInstanceInvalidStatusException,
+    TaskInstanceReminderTimeNotComeYet,
 )
 
 
@@ -30,6 +33,7 @@ class TaskInstance(AggregateRoot[uuid.UUID]):
         created_at: datetime.datetime,
         status: TaskStatus,
         postpone_reason: str | None,
+        reminded_at: datetime.datetime | None,
     ):
         super().__init__(id)
         self.public_id = public_id
@@ -42,6 +46,7 @@ class TaskInstance(AggregateRoot[uuid.UUID]):
         self.created_at = created_at
         self.status = status
         self.postpone_reason = postpone_reason
+        self.reminded_at = reminded_at
 
     @classmethod
     def create(
@@ -66,6 +71,7 @@ class TaskInstance(AggregateRoot[uuid.UUID]):
             created_at=now,
             status=TaskStatus.PENDING,
             postpone_reason=None,
+            reminded_at=None,
         )
 
     @property
@@ -104,3 +110,34 @@ class TaskInstance(AggregateRoot[uuid.UUID]):
 
         self.occurrence_date = new_occurrence_date
         self.postpone_reason = reason
+
+    def mark_reminded(self, now: datetime.datetime):
+        if self.scheduled_at is None:
+            return
+
+        if self.reminded_at:
+            return
+
+        if self.status != TaskStatus.PENDING:
+            raise TaskInstanceInvalidStatusException(
+                context={"operation": "mark_reminded", "status": self.status}
+            )
+        if self.occurrence_date != now.date():
+            raise TaskInstanceInvalidReminderDateException(
+                context={
+                    "reminder_date": self.occurrence_date.isoformat(),
+                    "today": now.date().isoformat(),
+                }
+            )
+        if self.scheduled_at is not None and now < self.scheduled_at:
+            raise TaskInstanceReminderTimeNotComeYet(
+                context={"reminder_time": self.scheduled_at}
+            )
+
+        self.reminded_at = now
+
+        self.add_event(
+            TaskReminderRequested(
+                task_instance_id=str(self.id),
+            )
+        )

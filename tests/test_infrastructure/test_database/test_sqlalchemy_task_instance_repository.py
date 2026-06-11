@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from domain.task_instance.aggregate import TaskInstance
+from domain.task_instance.aggregate import TaskInstance, TaskStatus
 from infrastructure.database.repositories.task_instance import (
     SqlAlchemyTaskInstanceRepository,
 )
@@ -190,3 +190,105 @@ async def test_get_all_by_user_per_day(
 
     assert len(instances) == 1
     assert next(iter(instances)).id == (matching_task_instance.id)
+
+
+@pytest.mark.parametrize(
+    "now", (datetime.datetime.fromisoformat("2021-01-10T08:00:00"),)
+)
+@pytest.mark.parametrize(
+    ("task_instance", "is_returned"),
+    (
+        # happy path
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                scheduled_at=datetime.datetime.fromisoformat("2021-01-10T08:00:00"),
+                status=TaskStatus.PENDING,
+                reminded_at=None,
+            ),
+            True,
+        ),
+        # другой день
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-09"),
+                scheduled_at=datetime.datetime.fromisoformat("2021-01-10T08:00:00"),
+                status=TaskStatus.PENDING,
+                reminded_at=None,
+            ),
+            False,
+        ),
+        # scheduled_at отсутствует
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                scheduled_at=None,
+                status=TaskStatus.PENDING,
+                reminded_at=None,
+            ),
+            False,
+        ),
+        # scheduled_at позже now
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                scheduled_at=datetime.datetime.fromisoformat("2021-01-10T09:00:00"),
+                status=TaskStatus.PENDING,
+                reminded_at=None,
+            ),
+            True,
+        ),
+        # scheduled_at раньше now
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                scheduled_at=datetime.datetime.fromisoformat("2021-01-10T07:00:00"),
+                status=TaskStatus.PENDING,
+                reminded_at=None,
+            ),
+            False,
+        ),
+        # уже напомнили
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                scheduled_at=datetime.datetime.fromisoformat("2021-01-10T08:00:00"),
+                status=TaskStatus.PENDING,
+                reminded_at=datetime.datetime.fromisoformat("2021-01-10T08:05:00"),
+            ),
+            False,
+        ),
+        # completed
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                scheduled_at=datetime.datetime.fromisoformat("2021-01-10T08:00:00"),
+                status=TaskStatus.COMPLETED,
+                reminded_at=None,
+            ),
+            False,
+        ),
+        # cancelled
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                scheduled_at=datetime.datetime.fromisoformat("2021-01-10T08:00:00"),
+                status=TaskStatus.CANCELLED,
+                reminded_at=None,
+            ),
+            False,
+        ),
+    ),
+)
+async def test_get_all_for_remind(
+    sqlalchemy_task_instance_repository: SqlAlchemyTaskInstanceRepository,
+    task_instance: TaskInstance,
+    is_returned: bool,
+    now: datetime.datetime,
+):
+    await sqlalchemy_task_instance_repository.save(task_instance)
+
+    result = await sqlalchemy_task_instance_repository.get_all_for_remind(now)
+    assert (
+        task_instance.id in {task_instance.id for task_instance in result}
+    ) == is_returned

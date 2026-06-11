@@ -3,7 +3,7 @@ import uuid
 
 import pytest
 
-from domain.task_instance.aggregate import TaskInstance
+from domain.task_instance.aggregate import TaskInstance, TaskStatus
 from infrastructure.memory.repositories import (
     MemoryTaskInstanceRepository,
 )
@@ -109,3 +109,105 @@ async def test_memory_task_instance_get_all_by_day(
 
     ids_in_result = {task_instance.id for task_instance in result}
     assert ids_in_result == set(expected_ids_in_result)
+
+
+@pytest.mark.parametrize(
+    "now", (datetime.datetime.fromisoformat("2021-01-10T08:00:00"),)
+)
+@pytest.mark.parametrize(
+    ("task_instance", "is_returned"),
+    (
+        # happy path
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                scheduled_at=datetime.datetime.fromisoformat("2021-01-10T08:00:00"),
+                status=TaskStatus.PENDING,
+                reminded_at=None,
+            ),
+            True,
+        ),
+        # другой день
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-09"),
+                scheduled_at=datetime.datetime.fromisoformat("2021-01-10T08:00:00"),
+                status=TaskStatus.PENDING,
+                reminded_at=None,
+            ),
+            False,
+        ),
+        # scheduled_at отсутствует
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                scheduled_at=None,
+                status=TaskStatus.PENDING,
+                reminded_at=None,
+            ),
+            False,
+        ),
+        # scheduled_at позже now
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                scheduled_at=datetime.datetime.fromisoformat("2021-01-10T09:00:00"),
+                status=TaskStatus.PENDING,
+                reminded_at=None,
+            ),
+            True,
+        ),
+        # scheduled_at раньше now
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                scheduled_at=datetime.datetime.fromisoformat("2021-01-10T07:00:00"),
+                status=TaskStatus.PENDING,
+                reminded_at=None,
+            ),
+            False,
+        ),
+        # уже напомнили
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                scheduled_at=datetime.datetime.fromisoformat("2021-01-10T08:00:00"),
+                status=TaskStatus.PENDING,
+                reminded_at=datetime.datetime.fromisoformat("2021-01-10T08:05:00"),
+            ),
+            False,
+        ),
+        # completed
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                scheduled_at=datetime.datetime.fromisoformat("2021-01-10T08:00:00"),
+                status=TaskStatus.COMPLETED,
+                reminded_at=None,
+            ),
+            False,
+        ),
+        # cancelled
+        (
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                scheduled_at=datetime.datetime.fromisoformat("2021-01-10T08:00:00"),
+                status=TaskStatus.CANCELLED,
+                reminded_at=None,
+            ),
+            False,
+        ),
+    ),
+)
+async def test_get_all_for_remind(
+    memory_task_instance_repository: MemoryTaskInstanceRepository,
+    task_instance: TaskInstance,
+    is_returned: bool,
+    now: datetime.datetime,
+):
+    await memory_task_instance_repository.save(task_instance)
+
+    result = await memory_task_instance_repository.get_all_for_remind(now)
+    assert (
+        task_instance.id in {task_instance.id for task_instance in result}
+    ) == is_returned

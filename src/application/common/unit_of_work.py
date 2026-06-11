@@ -1,5 +1,7 @@
 import abc
 
+from application.common.repositories import OutboxRepository
+from domain.common.event import DomainEvent
 from domain.task_instance.repository import TaskInstanceRepository
 from domain.task_template.repository import TaskTemplateRepository
 from domain.user.repository import UserRepository
@@ -11,6 +13,7 @@ class UnitOfWork(abc.ABC):
         self._task_instances: TaskInstanceRepository | None = None
         self._task_templates: TaskTemplateRepository | None = None
         self._users: UserRepository | None = None
+        self._outbox: OutboxRepository | None = None
 
     @property
     def task_instances(self) -> TaskInstanceRepository:
@@ -30,6 +33,12 @@ class UnitOfWork(abc.ABC):
             raise RuntimeError("Users repository is not initialized")
         return self._users
 
+    @property
+    def outbox(self) -> OutboxRepository:
+        if self._outbox is None:
+            raise RuntimeError("Outbox repository is not initialized")
+        return self._outbox
+
     @abc.abstractmethod
     async def commit(self) -> None: ...
 
@@ -42,4 +51,8 @@ class UnitOfWork(abc.ABC):
 
     @abc.abstractmethod
     async def __aexit__(self, exc_type, exc, tb):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _collect_events(self) -> list[DomainEvent]:
         raise NotImplementedError

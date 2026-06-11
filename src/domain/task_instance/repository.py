@@ -32,3 +32,9 @@ class TaskInstanceRepository(abc.ABC):
         self, user_id: uuid.UUID, day: datetime.date
     ) -> collections.abc.Collection[TaskInstance]:
         pass
+
+    @abc.abstractmethod
+    async def get_all_for_remind(
+        self, now: datetime.datetime
+    ) -> collections.abc.Collection[TaskInstance]:
+        pass

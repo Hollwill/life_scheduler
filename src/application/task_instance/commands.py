@@ -1,4 +1,5 @@
 import dataclasses
+import datetime
 
 from application.common.base import CommandHandler
 from application.common.unit_of_work import UnitOfWork
@@ -27,3 +28,23 @@ class CompleteTaskInstanceHandler(CommandHandler[CompleteTaskInstanceCommand, No
             task_instance.complete()
 
             await self.uow.task_instances.save(task_instance)
+
+
+@dataclasses.dataclass
+class GenerateTaskRemindersCommand:
+    pass
+
+
+class GenerateTaskRemindersHandler(CommandHandler[GenerateTaskRemindersCommand, None]):
+    def __init__(self, uow: UnitOfWork, now: datetime.datetime) -> None:
+        self.uow = uow
+        self.now = now
+
+    async def handle(self, command: GenerateTaskRemindersCommand) -> None:
+        async with self.uow:
+            for task_instance in await self.uow.task_instances.get_all_for_remind(
+                now=self.now
+            ):
+                # produces reminder event
+                task_instance.mark_reminded(now=self.now)
+                await self.uow.task_instances.save(task_instance)

@@ -4,9 +4,12 @@ import typing
 import pytest
 
 from domain.task_instance.aggregate import TaskInstance, TaskStatus
+from domain.task_instance.events import TaskReminderRequested
 from domain.task_instance.exceptions import (
     TaskInstanceInvalidPostponeDateException,
+    TaskInstanceInvalidReminderDateException,
     TaskInstanceInvalidStatusException,
+    TaskInstanceReminderTimeNotComeYet,
 )
 from domain.task_instance.service import TaskGenerationService
 from domain.task_template.aggregate import TaskTemplate
@@ -261,3 +264,110 @@ def test_task_template_edit(
 
     for attr in non_changed_attributes:
         assert getattr(task_template, attr) == original_values[attr]
+
+
+def test_task_instance_mark_reminded(
+    now: datetime.datetime,
+):
+    task_instance: TaskInstance = TaskInstanceFactory.build(
+        status=TaskStatus.PENDING,
+        occurrence_date=now.date(),
+        scheduled_at=now - datetime.timedelta(minutes=1),
+        reminded_at=None,
+    )
+
+    task_instance.mark_reminded(now)
+
+    assert task_instance.reminded_at == now
+
+    events = task_instance.flush_events()
+    assert len(events) == 1
+
+    event = events[0]
+
+    assert isinstance(event, TaskReminderRequested)
+    assert event.task_instance_id == str(task_instance.id)
+
+
+def test_task_instance_mark_reminded_skips_if_scheduled_at_is_none(
+    now: datetime.datetime,
+):
+    task_instance: TaskInstance = TaskInstanceFactory.build(
+        status=TaskStatus.PENDING,
+        occurrence_date=now.date(),
+        scheduled_at=None,
+        reminded_at=None,
+    )
+
+    task_instance.mark_reminded(now)
+
+    assert task_instance.reminded_at is None
+    assert task_instance.flush_events() == []
+
+
+def test_task_instance_mark_reminded_skips_if_already_reminded(
+    now: datetime.datetime,
+):
+    reminded_at = now - datetime.timedelta(hours=1)
+
+    task_instance: TaskInstance = TaskInstanceFactory.build(
+        status=TaskStatus.PENDING,
+        occurrence_date=now.date(),
+        scheduled_at=now - datetime.timedelta(minutes=1),
+        reminded_at=reminded_at,
+    )
+
+    task_instance.mark_reminded(now)
+
+    assert task_instance.reminded_at == reminded_at
+    assert len(task_instance.flush_events()) == 0
+
+
+@pytest.mark.parametrize(
+    "status",
+    (
+        TaskStatus.COMPLETED,
+        TaskStatus.CANCELLED,
+    ),
+)
+def test_task_instance_mark_reminded_invalid_status(
+    status: TaskStatus,
+    now: datetime.datetime,
+):
+    task_instance: TaskInstance = TaskInstanceFactory.build(
+        status=status,
+        occurrence_date=now.date(),
+        scheduled_at=now - datetime.timedelta(minutes=1),
+        reminded_at=None,
+    )
+
+    with pytest.raises(TaskInstanceInvalidStatusException):
+        task_instance.mark_reminded(now)
+
+
+def test_task_instance_mark_reminded_invalid_date(
+    now: datetime.datetime,
+):
+    task_instance: TaskInstance = TaskInstanceFactory.build(
+        status=TaskStatus.PENDING,
+        occurrence_date=now.date() + datetime.timedelta(days=1),
+        scheduled_at=now - datetime.timedelta(minutes=1),
+        reminded_at=None,
+    )
+
+    with pytest.raises(TaskInstanceInvalidReminderDateException):
+        task_instance.mark_reminded(now)
+
+
+def test_task_instance_mark_reminded_time_not_come_yet(
+    now: datetime.datetime,
+):
+    task_instance: TaskInstance = TaskInstanceFactory.build(
+        status=TaskStatus.PENDING,
+        occurrence_date=now.date(),
+        scheduled_at=now + datetime.timedelta(minutes=1),
+        reminded_at=None,
+    )
+
+    with pytest.raises(TaskInstanceReminderTimeNotComeYet):
+        task_instance.mark_reminded(now)

@@ -3,7 +3,7 @@ import copy
 import datetime
 import uuid
 
-from domain.task_instance.aggregate import TaskInstance
+from domain.task_instance.aggregate import TaskInstance, TaskStatus
 from domain.task_instance.repository import TaskInstanceRepository
 from infrastructure.memory.database import MemoryDatabase
 
@@ -46,4 +46,17 @@ class MemoryTaskInstanceRepository(TaskInstanceRepository):
             task_instance
             for task_instance in self.db.task_instances.values()
             if task_instance.occurrence_date == day and task_instance.user_id == user_id
+        ]
+
+    async def get_all_for_remind(
+        self, now: datetime.datetime
+    ) -> collections.abc.Collection[TaskInstance]:
+        return [
+            task_instance
+            for task_instance in self.db.task_instances.values()
+            if task_instance.occurrence_date == now.date()
+            and task_instance.scheduled_at
+            and task_instance.scheduled_at >= now
+            and task_instance.status is TaskStatus.PENDING
+            and task_instance.reminded_at is None
         ]

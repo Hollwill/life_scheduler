@@ -38,3 +38,5 @@ class TaskInstanceFactory(factory.Factory):
     status = TaskStatus.PENDING
 
     postpone_reason = None
+
+    reminded_at = None
