@@ -8,6 +8,7 @@ from sqlalchemy import (
     String,
     Table,
     UniqueConstraint,
+    event,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -98,3 +99,18 @@ mapper_registry.map_imperatively(
     OutboxModel,
     outbox_table,
 )
+
+
+@event.listens_for(TaskInstance, "load")
+def task_instance_loaded(target, context):
+    target._events = []
+
+
+@event.listens_for(TaskTemplate, "load")
+def task_template_loaded(target, context):
+    target._events = []
+
+
+@event.listens_for(User, "load")
+def user_loaded(target, context):
+    target._events = []
