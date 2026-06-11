@@ -14,11 +14,10 @@ async def test_uow_cannot_use_one_object_twice(
     sqlalchemy_uow = SqlAlchemyUnitOfWork(session_factory)
 
     async with sqlalchemy_uow:
-        pass
+        first_session = sqlalchemy_uow.session
 
-    with pytest.raises(RuntimeError):
-        async with sqlalchemy_uow:
-            pass
+    async with sqlalchemy_uow:
+        assert sqlalchemy_uow.session is not first_session
 
 
 @pytest.mark.parametrize("task_instance", (TaskInstanceFactory.build(),))

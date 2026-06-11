@@ -22,7 +22,7 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
 
     async def __aenter__(self):
         if self.session is not None:
-            raise RuntimeError("Unit of Work already used!")
+            raise RuntimeError("Already in a transaction.")
 
         self.session = self._session_factory()
         assert self.session is not None
@@ -55,6 +55,7 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
                 await self.session.commit()
         finally:
             await self.session.close()
+            self.session = None
 
     def _collect_events(self) -> list[DomainEvent]:
         assert self.session is not None
