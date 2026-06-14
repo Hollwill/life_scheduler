@@ -10,7 +10,6 @@ from application.task_template.commands import (
     GenerateTasksForDayHandler,
 )
 from composition.container import container
-from domain.task_instance.service import TaskGenerationService
 from infrastructure.database.init_db import init_db
 
 
@@ -20,7 +19,6 @@ async def main():
 
         handler = GenerateTasksForDayHandler(
             uow=await request_container.get(UnitOfWork),
-            task_generation_service=await request_container.get(TaskGenerationService),
             now=now,
         )
 

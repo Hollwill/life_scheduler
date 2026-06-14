@@ -8,6 +8,7 @@ class TaskGenerationService:
     @staticmethod
     def generate_from_template(
         template: TaskTemplate,
+        scheduled_at: datetime.datetime | None,
         day: datetime.date,
         now: datetime.datetime,
     ) -> TaskInstance | None:
@@ -15,7 +16,6 @@ class TaskGenerationService:
             return None
         if not template.occurs_on(day):
             return None
-        reminder_at = template.reminder_at(day)
 
         return TaskInstance.create(
             task_template_id=template.id,
@@ -23,6 +23,6 @@ class TaskGenerationService:
             title=template.title,
             description=template.description,
             occurrence_date=day,
-            scheduled_at=reminder_at,
+            scheduled_at=scheduled_at,
             now=now,
         )

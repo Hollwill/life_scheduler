@@ -22,3 +22,4 @@ async def test_save_user(
     assert loaded.id == user.id
     assert loaded.telegram_user_id == user.telegram_user_id
     assert loaded.name == user.name
+    assert loaded.timezone == user.timezone

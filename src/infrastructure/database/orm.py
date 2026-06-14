@@ -18,7 +18,7 @@ from domain.task_instance.aggregate import TaskInstance, TaskStatus
 from domain.task_template.aggregate import TaskTemplate
 from domain.user.aggregate import User
 from infrastructure.database.outbox import OutboxModel
-from infrastructure.database.types import TriggerType
+from infrastructure.database.types import TimeZoneType, TriggerType
 
 mapper_registry = registry()
 
@@ -63,6 +63,7 @@ user_table = Table(
     mapper_registry.metadata,
     Column("id", UUID(as_uuid=True), primary_key=True),
     Column("telegram_user_id", Integer, nullable=False, unique=True),
+    Column("timezone", TimeZoneType, nullable=False),
     Column("name", String(255), nullable=True),
 )
 

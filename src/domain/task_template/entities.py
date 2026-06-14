@@ -42,6 +42,9 @@ class Trigger(
             return None
         return self._calculate_reminder_at(day)
 
+    def get_reminder_time(self) -> datetime.time | None:
+        return None
+
 
 class ReminderTimeTrigger(
     Trigger,
@@ -62,6 +65,9 @@ class ReminderTimeTrigger(
         if self.reminder_time is None:
             return None
         return datetime.datetime.combine(date=day, time=self.reminder_time)
+
+    def get_reminder_time(self) -> datetime.time | None:
+        return self.reminder_time
 
 
 class OneTimeTrigger(ReminderTimeTrigger):

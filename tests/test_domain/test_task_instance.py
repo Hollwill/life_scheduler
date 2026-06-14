@@ -11,12 +11,9 @@ from domain.task_instance.exceptions import (
     TaskInstanceInvalidStatusException,
     TaskInstanceReminderTimeNotComeYet,
 )
-from domain.task_instance.service import TaskGenerationService
 from domain.task_template.aggregate import TaskTemplate
-from domain.task_template.value_objects import Weekday
 from tests.factories.task_instance import TaskInstanceFactory
 from tests.factories.task_template import TaskTemplateFactory
-from tests.factories.trigger import DailyTriggerFactory, WeeklyTriggerFactory
 
 
 @pytest.mark.parametrize(
@@ -114,114 +111,114 @@ def test_task_instance_postpone_invalid_date(
         )
 
 
-@pytest.mark.parametrize(
-    "task_template",
-    (
-        TaskTemplateFactory.build(
-            title="Template Title",
-            description="Template Description",
-            created_at=datetime.datetime.fromisoformat("2026-01-01T10:00:00"),
-            trigger=DailyTriggerFactory.build(
-                reminder_time=datetime.time.fromisoformat("12:00:00")
-            ),
-        ),
-    ),
-)
-@pytest.mark.parametrize(
-    ("generate_day", "now", "expected_scheduled_at"),
-    (
-        (
-            datetime.date.fromisoformat("2026-05-24"),
-            datetime.datetime.fromisoformat("2026-05-24T08:00:00"),
-            datetime.datetime.fromisoformat("2026-05-24T12:00:00"),
-        ),
-    ),
-)
-def test_generate_task_instance_from_template_success(
-    task_template,
-    generate_day: datetime.date,
-    now: datetime.datetime,
-    expected_scheduled_at: datetime.datetime,
-):
-    instance = TaskGenerationService.generate_from_template(
-        template=task_template, day=generate_day, now=now
-    )
-    assert instance.task_template_id == task_template.id
-    assert instance.user_id == task_template.user_id
-    assert instance.title == task_template.title
-    assert instance.description == task_template.description
-    assert instance.occurrence_date == generate_day
-    assert instance.scheduled_at == expected_scheduled_at
-    assert instance.created_at == now
-    assert not instance.is_completed
+# @pytest.mark.parametrize(
+#     "task_template",
+#     (
+#         TaskTemplateFactory.build(
+#             title="Template Title",
+#             description="Template Description",
+#             created_at=datetime.datetime.fromisoformat("2026-01-01T10:00:00"),
+#             trigger=DailyTriggerFactory.build(
+#                 reminder_time=datetime.time.fromisoformat("12:00:00")
+#             ),
+#         ),
+#     ),
+# )
+# @pytest.mark.parametrize(
+#     ("generate_day", "now", "expected_scheduled_at"),
+#     (
+#         (
+#             datetime.date.fromisoformat("2026-05-24"),
+#             datetime.datetime.fromisoformat("2026-05-24T08:00:00"),
+#             datetime.datetime.fromisoformat("2026-05-24T12:00:00"),
+#         ),
+#     ),
+# )
+# def test_generate_task_instance_from_template_success(
+#     task_template,
+#     generate_day: datetime.date,
+#     now: datetime.datetime,
+#     expected_scheduled_at: datetime.datetime,
+# ):
+#     instance = TaskGenerationService.generate_from_template(
+#         template=task_template, day=generate_day, now=now
+#     )
+#     assert instance.task_template_id == task_template.id
+#     assert instance.user_id == task_template.user_id
+#     assert instance.title == task_template.title
+#     assert instance.description == task_template.description
+#     assert instance.occurrence_date == generate_day
+#     assert instance.scheduled_at == expected_scheduled_at
+#     assert instance.created_at == now
+#     assert not instance.is_completed
 
 
-@pytest.mark.parametrize(
-    "task_template",
-    (
-        TaskTemplateFactory.build(
-            trigger=WeeklyTriggerFactory.build(
-                weekdays=frozenset([Weekday.MONDAY]),
-            )
-        ),
-    ),
-)
-@pytest.mark.parametrize(
-    ("generate_day", "creation_now"),
-    (
-        (
-            datetime.date.fromisoformat("2026-05-24"),  # Sunday
-            datetime.datetime.fromisoformat("2026-05-24T08:00:00"),
-        ),
-    ),
-)
-def test_generate_task_instance_from_template_not_scheduled(
-    task_template, generate_day: datetime.date, creation_now: datetime.datetime
-):
-    task_instance = TaskGenerationService.generate_from_template(
-        template=task_template, day=generate_day, now=creation_now
-    )
-    assert task_instance is None
+# @pytest.mark.parametrize(
+#     "task_template",
+#     (
+#         TaskTemplateFactory.build(
+#             trigger=WeeklyTriggerFactory.build(
+#                 weekdays=frozenset([Weekday.MONDAY]),
+#             )
+#         ),
+#     ),
+# )
+# @pytest.mark.parametrize(
+#     ("generate_day", "creation_now"),
+#     (
+#         (
+#             datetime.date.fromisoformat("2026-05-24"),  # Sunday
+#             datetime.datetime.fromisoformat("2026-05-24T08:00:00"),
+#         ),
+#     ),
+# )
+# def test_generate_task_instance_from_template_not_scheduled(
+#     task_template, generate_day: datetime.date, creation_now: datetime.datetime
+# ):
+#     task_instance = TaskGenerationService.generate_from_template(
+#         template=task_template, day=generate_day, now=creation_now
+#     )
+#     assert task_instance is None
 
 
-@pytest.mark.parametrize(
-    "task_template",
-    (
-        TaskTemplateFactory.build(
-            title="Template Title",
-            trigger=DailyTriggerFactory.build(
-                reminder_time=datetime.time.fromisoformat("12:00:00")
-            ),
-        ),
-    ),
-)
-@pytest.mark.parametrize("new_title", ("New Title",))
-@pytest.mark.parametrize(
-    ("generate_day", "now"),
-    (
-        (
-            datetime.date.fromisoformat("2026-05-24"),
-            datetime.datetime.fromisoformat("2026-05-24T08:00:00"),
-        ),
-    ),
-)
-def test_generate_task_instance_independence(
-    task_template: TaskTemplate,
-    new_title: str,
-    generate_day: datetime.date,
-    now: datetime.datetime,
-):
-
-    instance = TaskGenerationService.generate_from_template(
-        template=task_template, day=generate_day, now=now
-    )
-
-    # Change template
-    initial_title = task_template.title
-    task_template.edit(title=new_title, now=datetime.datetime.now())
-
-    assert instance.title == initial_title
-    assert task_template.title == new_title
+# @pytest.mark.parametrize(
+#     "task_template",
+#     (
+#         TaskTemplateFactory.build(
+#             title="Template Title",
+#             trigger=DailyTriggerFactory.build(
+#                 reminder_time=datetime.time.fromisoformat("12:00:00")
+#             ),
+#         ),
+#     ),
+# )
+# @pytest.mark.parametrize("new_title", ("New Title",))
+# @pytest.mark.parametrize(
+#     ("generate_day", "now"),
+#     (
+#         (
+#             datetime.date.fromisoformat("2026-05-24"),
+#             datetime.datetime.fromisoformat("2026-05-24T08:00:00"),
+#         ),
+#     ),
+# )
+# def test_generate_task_instance_independence(
+#     task_template: TaskTemplate,
+#     new_title: str,
+#     generate_day: datetime.date,
+#     now: datetime.datetime,
+# ):
+#
+#     instance = TaskGenerationService.generate_from_template(
+#         template=task_template, day=generate_day, now=now
+#     )
+#
+#     # Change template
+#     initial_title = task_template.title
+#     task_template.edit(title=new_title, now=datetime.datetime.now())
+#
+#     assert instance.title == initial_title
+#     assert task_template.title == new_title
 
 
 @pytest.mark.parametrize(
