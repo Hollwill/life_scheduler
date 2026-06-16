@@ -13,6 +13,9 @@ class SqlAlchemyOutboxRepository(OutboxRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def save(self, instance: OutboxModel):
+        self.session.add(instance)
+
     async def get_unprocessed(self) -> typing.Collection[OutboxModel]:
         stmt = select(OutboxModel).where(outbox_table.c.processed_at.is_(None))
         result = await self.session.execute(stmt)

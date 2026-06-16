@@ -7,6 +7,10 @@ from infrastructure.database.outbox import OutboxModel
 
 class OutboxRepository(abc.ABC):
     @abc.abstractmethod
+    async def save(self, instance: OutboxModel):
+        pass
+
+    @abc.abstractmethod
     async def get_unprocessed(self) -> typing.Collection[OutboxModel]:
         pass
 

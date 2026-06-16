@@ -8,10 +8,13 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from application.common.events import DispatchOutboxMessagesHandler, EventDispatcher
+from application.common.repositories import OutboxRepository
 from application.common.unit_of_work import UnitOfWork
 from application.task_instance.commands import (
     CompleteTaskInstanceHandler,
 )
+from application.task_instance.event_handlers import SendTelegramReminderHandler
 from application.task_instance.queries import GetTaskInstancesHandler
 from application.task_template.commands import (
     CreateTaskTemplateHandler,
@@ -19,11 +22,13 @@ from application.task_template.commands import (
 )
 from application.task_template.queries import GetTaskTemplatesHandler
 from application.user.commands import GetOrCreateUserHandler
+from domain.task_instance.events import TaskReminderRequested
 from domain.task_instance.repository import TaskInstanceRepository
 from domain.task_template.repository import TaskTemplateRepository
 from domain.user.repository import (
     UserRepository,
 )
+from infrastructure.database.repositories.outbox import SqlAlchemyOutboxRepository
 from infrastructure.database.repositories.task_instance import (
     SqlAlchemyTaskInstanceRepository,
 )
@@ -90,6 +95,27 @@ class ApplicationProvider(Provider):
         uow: UnitOfWork,
     ) -> CreateTaskTemplateHandler:
         return CreateTaskTemplateHandler(uow=uow)
+
+    @provide(scope=Scope.REQUEST)
+    def get_event_dispatcher(self, uow: UnitOfWork) -> EventDispatcher:
+        return EventDispatcher(
+            handlers={
+                TaskReminderRequested: [
+                    SendTelegramReminderHandler(uow=uow),
+                ]
+            }
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def get_outbox_messages_handler(
+        self,
+        outbox_repository: OutboxRepository,
+        uow: UnitOfWork,
+        dispatcher: EventDispatcher,
+    ) -> DispatchOutboxMessagesHandler:
+        return DispatchOutboxMessagesHandler(
+            outbox_repository=outbox_repository, uow=uow, dispatcher=dispatcher
+        )
 
 
 class DatabaseProvider(Provider):
@@ -159,6 +185,16 @@ class RepositoryProvider(Provider):
     ) -> TaskInstanceRepository:
 
         return SqlAlchemyTaskInstanceRepository(
+            session=session,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def outbox_repository(
+        self,
+        session: AsyncSession,
+    ) -> OutboxRepository:
+
+        return SqlAlchemyOutboxRepository(
             session=session,
         )
 

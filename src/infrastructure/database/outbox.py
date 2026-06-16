@@ -20,3 +20,6 @@ class OutboxModel:
             payload=event.payload,
             processed_at=None,
         )
+
+    def mark_processed(self) -> None:
+        self.processed_at = datetime.datetime.now()

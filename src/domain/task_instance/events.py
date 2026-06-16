@@ -1,3 +1,4 @@
+import typing
 from dataclasses import dataclass
 
 from domain.common.event import DomainEvent
@@ -9,6 +10,4 @@ from domain.common.event import DomainEvent
 class TaskReminderRequested(DomainEvent):
     task_instance_id: str
 
-    @property
-    def event_type(self) -> str:
-        return "task_instance.task_reminder_requested"
+    event_type: typing.ClassVar[str] = "task_instance.task_reminder_requested"

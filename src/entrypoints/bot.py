@@ -10,11 +10,13 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from composition.container import container
 from infrastructure.database.init_db import init_db
+from infrastructure.logging import setup_logging
 from presentation.telegram.bot import dp
 from settings import Settings
 
 
 async def main() -> None:
+    setup_logging()
 
     settings = await container.get(Settings)
 

@@ -1,12 +1,13 @@
+import abc
+import typing
 from dataclasses import asdict, dataclass
 
 
 @dataclass(frozen=True)
-class DomainEvent:
-    @property
-    def event_type(self) -> str:
-        raise NotImplementedError
+class DomainEvent(abc.ABC):
+    event_type: typing.ClassVar[str] = "define_it"
 
     @property
     def payload(self) -> dict:
-        return asdict(self)
+        payload_dict = asdict(self)
+        return payload_dict

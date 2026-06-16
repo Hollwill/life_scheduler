@@ -11,9 +11,11 @@ from application.task_instance.commands import (
 )
 from composition.container import container
 from infrastructure.database.init_db import init_db
+from infrastructure.logging import setup_logging
 
 
 async def main():
+    setup_logging()
     async with container(scope=Scope.REQUEST) as request_container:
         now = datetime.datetime.now(tz=datetime.UTC)
 

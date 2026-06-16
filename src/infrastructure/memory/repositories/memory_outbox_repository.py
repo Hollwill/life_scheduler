@@ -1,3 +1,4 @@
+import copy
 import datetime
 import typing
 
@@ -9,6 +10,9 @@ from infrastructure.memory.database import MemoryDatabase
 class MemoryOutboxRepository(OutboxRepository):
     def __init__(self, db: MemoryDatabase) -> None:
         self.db = db
+
+    async def save(self, instance: OutboxModel):
+        self.db.outbox[instance.id] = copy.deepcopy(instance)
 
     async def get_unprocessed(self) -> typing.Collection[OutboxModel]:
         return [

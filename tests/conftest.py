@@ -26,6 +26,9 @@ from infrastructure.memory.repositories import (
     MemoryTaskTemplateRepository,
     MemoryUserRepository,
 )
+from infrastructure.memory.repositories.memory_outbox_repository import (
+    MemoryOutboxRepository,
+)
 from infrastructure.memory.unit_of_work import MemoryUnitOfWork
 
 
@@ -97,7 +100,12 @@ def memory_user_repository(db_memory: MemoryDatabase) -> MemoryUserRepository:
 
 
 @pytest.fixture
-async def memory_uow(db_memory: MemoryDatabase):
+def memory_outbox_repository(db_memory: MemoryDatabase) -> MemoryOutboxRepository:
+    return MemoryOutboxRepository(db_memory)
+
+
+@pytest.fixture
+async def memory_uow(db_memory: MemoryDatabase) -> MemoryUnitOfWork:
     return MemoryUnitOfWork(db_memory)
 
 
