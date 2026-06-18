@@ -192,6 +192,7 @@ class GenerateTasksForDayHandler(CommandHandler[GenerateTasksForDayCommand, None
                         "Generated task instance %s for task template %s on date %s, scheduled at %s",
                         task_instance.id,
                         task_template.id,
+                        self.now.isoformat(),
                         scheduled_at.isoformat() if scheduled_at else None,
                     )
 

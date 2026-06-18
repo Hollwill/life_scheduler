@@ -1,5 +1,8 @@
 from collections.abc import AsyncIterable
 
+from aiogram import Bot
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -9,6 +12,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from application.common.events import DispatchOutboxMessagesHandler, EventDispatcher
+from application.common.notifiers import TelegramNotifier
 from application.common.repositories import OutboxRepository
 from application.common.unit_of_work import UnitOfWork
 from application.task_instance.commands import (
@@ -39,6 +43,7 @@ from infrastructure.database.repositories.user import (
     SqlAlchemyUserRepository,
 )
 from infrastructure.database.unit_of_work import SqlAlchemyUnitOfWork
+from infrastructure.notifiers import AiogramTelegramNotifier
 from settings import Settings
 
 
@@ -97,11 +102,15 @@ class ApplicationProvider(Provider):
         return CreateTaskTemplateHandler(uow=uow)
 
     @provide(scope=Scope.REQUEST)
-    def get_event_dispatcher(self, uow: UnitOfWork) -> EventDispatcher:
+    def get_event_dispatcher(
+        self, uow: UnitOfWork, telegram_notifier: TelegramNotifier
+    ) -> EventDispatcher:
         return EventDispatcher(
             handlers={
                 TaskReminderRequested: [
-                    SendTelegramReminderHandler(uow=uow),
+                    SendTelegramReminderHandler(
+                        uow=uow, telegram_notifier=telegram_notifier
+                    ),
                 ]
             }
         )
@@ -157,7 +166,7 @@ class DatabaseProvider(Provider):
                 raise
 
 
-class RepositoryProvider(Provider):
+class InfrastructureProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def user_repository(
         self,
@@ -186,6 +195,21 @@ class RepositoryProvider(Provider):
 
         return SqlAlchemyTaskInstanceRepository(
             session=session,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def bot(self, settings: Settings) -> Bot:
+        assert settings.telegram_bot_token
+
+        return Bot(
+            token=settings.telegram_bot_token,
+            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def telegram_notifier(self, bot: Bot) -> TelegramNotifier:
+        return AiogramTelegramNotifier(
+            bot=bot,
         )
 
     @provide(scope=Scope.REQUEST)
