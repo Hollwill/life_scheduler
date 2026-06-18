@@ -1,5 +1,6 @@
 import dataclasses
 import datetime
+import logging
 import uuid
 from itertools import groupby
 from zoneinfo import ZoneInfo
@@ -16,6 +17,8 @@ from domain.task_instance.aggregate import TaskInstance
 from domain.task_template.aggregate import TaskTemplate
 from domain.user.aggregate import User
 from domain.user.value_objects import TimeZone
+
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -155,8 +158,17 @@ class GenerateTasksForDayHandler(CommandHandler[GenerateTasksForDayCommand, None
 
                 for task_template in user_task_templates:
                     if task_template.id in exists_template_ids_for_day:
+                        logger.info(
+                            "Task not generated cause task for template %s already exists",
+                            task_template.id,
+                        )
                         continue
                     if not task_template.occurs_on(command.day):
+                        logger.info(
+                            "Task not generated cause template %s not occurs on %s",
+                            task_template.id,
+                            self.now.isoformat(),
+                        )
                         continue
 
                     scheduled_at = self._calculate_scheduled_at(
@@ -176,6 +188,12 @@ class GenerateTasksForDayHandler(CommandHandler[GenerateTasksForDayCommand, None
                     )
 
                     await self.uow.task_instances.save(task_instance)
+                    logger.info(
+                        "Generated task instance %s for task template %s on date %s, scheduled at %s",
+                        task_instance.id,
+                        task_template.id,
+                        scheduled_at.isoformat() if scheduled_at else None,
+                    )
 
     @staticmethod
     def _calculate_scheduled_at(
