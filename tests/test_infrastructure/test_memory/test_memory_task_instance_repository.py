@@ -211,3 +211,73 @@ async def test_get_all_for_remind(
     assert (
         task_instance.id in {task_instance.id for task_instance in result}
     ) == is_returned
+
+
+@pytest.mark.parametrize(
+    "now", (datetime.datetime.fromisoformat("2021-01-10T08:00:00"),)
+)
+@pytest.mark.parametrize(
+    ("task_instance", "is_returned"),
+    (
+        (
+            # Просроченная задача должна возвращаться
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-09"),
+                status=TaskStatus.PENDING,
+            ),
+            True,
+        ),
+        (
+            # Позавчерашняя задача возвращается
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-08"),
+                status=TaskStatus.PENDING,
+            ),
+            True,
+        ),
+        (
+            # Задача на текущую дату не возвращается
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                status=TaskStatus.PENDING,
+            ),
+            False,
+        ),
+        (
+            # Задача в статусе отличном от pending не возвращается
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                status=TaskStatus.COMPLETED,
+            ),
+            False,
+        ),
+        (
+            # Задача в статусе отличном от pending не возвращается
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                status=TaskStatus.MISSED,
+            ),
+            False,
+        ),
+        (
+            # Задача в статусе отличном от pending не возвращается
+            TaskInstanceFactory.build(
+                occurrence_date=datetime.date.fromisoformat("2021-01-10"),
+                status=TaskStatus.CANCELLED,
+            ),
+            False,
+        ),
+    ),
+)
+async def test_get_all_overdue(
+    memory_task_instance_repository: MemoryTaskInstanceRepository,
+    task_instance: TaskInstance,
+    now: datetime.datetime,
+    is_returned: bool,
+):
+    await memory_task_instance_repository.save(task_instance)
+
+    result = await memory_task_instance_repository.get_all_overdue(now=now)
+    assert (
+        task_instance.id in {task_instance.id for task_instance in result}
+    ) == is_returned

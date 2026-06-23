@@ -38,3 +38,9 @@ class TaskInstanceRepository(abc.ABC):
         self, now: datetime.datetime
     ) -> collections.abc.Collection[TaskInstance]:
         pass
+
+    @abc.abstractmethod
+    async def get_all_overdue(
+        self, now: datetime.datetime
+    ) -> collections.abc.Collection[TaskInstance]:
+        pass

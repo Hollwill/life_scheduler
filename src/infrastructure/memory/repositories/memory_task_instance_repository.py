@@ -60,3 +60,13 @@ class MemoryTaskInstanceRepository(TaskInstanceRepository):
             and task_instance.status is TaskStatus.PENDING
             and task_instance.reminded_at is None
         ]
+
+    async def get_all_overdue(
+        self, now: datetime.datetime
+    ) -> collections.abc.Collection[TaskInstance]:
+        return [
+            task_instance
+            for task_instance in self.db.task_instances.values()
+            if task_instance.occurrence_date < now.date()
+            and task_instance.status is TaskStatus.PENDING
+        ]

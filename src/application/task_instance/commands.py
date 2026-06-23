@@ -48,3 +48,22 @@ class GenerateTaskRemindersHandler(CommandHandler[GenerateTaskRemindersCommand, 
                 # produces reminder event
                 task_instance.mark_reminded(now=self.now)
                 await self.uow.task_instances.save(task_instance)
+
+
+@dataclasses.dataclass
+class MissOverdueTaskInstancesCommand:
+    now: datetime.datetime
+
+
+class MissOverdueTaskInstancesHandler(
+    CommandHandler[MissOverdueTaskInstancesCommand, None]
+):
+    def __init__(self, uow: UnitOfWork) -> None:
+        self.uow = uow
+
+    async def handle(self, command: MissOverdueTaskInstancesCommand) -> None:
+        overdue_tasks = await self.uow.task_instances.get_all_overdue(now=command.now)
+
+        for task in overdue_tasks:
+            task.miss()
+            await self.uow.task_instances.save(task)

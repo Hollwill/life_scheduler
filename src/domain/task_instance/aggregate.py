@@ -17,6 +17,7 @@ class TaskStatus(Enum):
     PENDING = "PENDING"
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
+    MISSED = "MISSED"
 
 
 class TaskInstance(AggregateRoot[uuid.UUID]):
@@ -91,6 +92,13 @@ class TaskInstance(AggregateRoot[uuid.UUID]):
                 context={"operation": "cancel", "status": self.status}
             )
         self.status = TaskStatus.CANCELLED
+
+    def miss(self) -> None:
+        if self.status != TaskStatus.PENDING:
+            raise TaskInstanceInvalidStatusException(
+                context={"operation": "miss", "status": self.status}
+            )
+        self.status = TaskStatus.MISSED
 
     def postpone(
         self,

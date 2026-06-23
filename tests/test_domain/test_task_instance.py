@@ -34,6 +34,31 @@ def test_task_instance_completion(
 @pytest.mark.parametrize(
     "task_instance", (TaskInstanceFactory.build(status=TaskStatus.PENDING),)
 )
+def test_task_instance_miss(
+    task_instance: TaskInstance,
+):
+
+    task_instance.miss()
+
+    assert task_instance.status == TaskStatus.MISSED
+
+
+@pytest.mark.parametrize(
+    "task_instance_status",
+    (TaskStatus.CANCELLED, TaskStatus.COMPLETED, TaskStatus.MISSED),
+)
+def test_task_instance_miss_invalid_status_transition(
+    task_instance_status: TaskStatus,
+):
+    task_instance = TaskInstanceFactory.build(status=task_instance_status)
+
+    with pytest.raises(TaskInstanceInvalidStatusException):
+        task_instance.miss()
+
+
+@pytest.mark.parametrize(
+    "task_instance", (TaskInstanceFactory.build(status=TaskStatus.PENDING),)
+)
 def test_task_instance_cancellation(task_instance: TaskInstance):
 
     task_instance.cancel()

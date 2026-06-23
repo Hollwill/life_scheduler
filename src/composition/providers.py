@@ -17,6 +17,7 @@ from application.common.repositories import OutboxRepository
 from application.common.unit_of_work import UnitOfWork
 from application.task_instance.commands import (
     CompleteTaskInstanceHandler,
+    MissOverdueTaskInstancesHandler,
 )
 from application.task_instance.event_handlers import SendTelegramReminderHandler
 from application.task_instance.queries import GetTaskInstancesHandler
@@ -125,6 +126,13 @@ class ApplicationProvider(Provider):
         return DispatchOutboxMessagesHandler(
             outbox_repository=outbox_repository, uow=uow, dispatcher=dispatcher
         )
+
+    @provide(scope=Scope.REQUEST)
+    def get_miss_overdue_task_instances_handler(
+        self,
+        uow: UnitOfWork,
+    ) -> MissOverdueTaskInstancesHandler:
+        return MissOverdueTaskInstancesHandler(uow=uow)
 
 
 class DatabaseProvider(Provider):

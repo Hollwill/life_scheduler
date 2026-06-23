@@ -62,3 +62,13 @@ class SqlAlchemyTaskInstanceRepository(TaskInstanceRepository):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars())
+
+    async def get_all_overdue(
+        self, now: datetime.datetime
+    ) -> collections.abc.Collection[TaskInstance]:
+        stmt = select(TaskInstance).where(
+            task_instance_table.c.occurrence_date < now.date(),
+            task_instance_table.c.status == TaskStatus.PENDING,
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars())
