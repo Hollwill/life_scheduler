@@ -62,8 +62,11 @@ class MissOverdueTaskInstancesHandler(
         self.uow = uow
 
     async def handle(self, command: MissOverdueTaskInstancesCommand) -> None:
-        overdue_tasks = await self.uow.task_instances.get_all_overdue(now=command.now)
+        async with self.uow:
+            overdue_tasks = await self.uow.task_instances.get_all_overdue(
+                now=command.now
+            )
 
-        for task in overdue_tasks:
-            task.miss()
-            await self.uow.task_instances.save(task)
+            for task in overdue_tasks:
+                task.miss()
+                await self.uow.task_instances.save(task)
