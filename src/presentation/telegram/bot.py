@@ -6,6 +6,7 @@ from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
+from application.common.tools.dispatcher import ToolDispatcher
 from application.task_instance.commands import (
     CompleteTaskInstanceCommand,
     CompleteTaskInstanceHandler,
@@ -281,15 +282,10 @@ async def create_yearly(
 
 
 @dp.message()
-async def echo_handler(message: Message) -> None:
-    """
-    Handler will forward receive a message back to the sender
+@inject
+async def echo_handler(
+    message: Message, tool_dispatcher: FromDishka[ToolDispatcher]
+) -> None:
+    tools = tool_dispatcher.get_schemas()
 
-    By default, message handler will handle all message types (like a text, photo, sticker etc.)
-    """
-    try:
-        # Send a copy of the received message
-        await message.send_copy(chat_id=message.chat.id)
-    except TypeError:
-        # But not all the types is supported to be copied so need to handle it
-        await message.answer("Nice try!")
+    await message.answer(str(tools))

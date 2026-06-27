@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import (
 from application.common.events import DispatchOutboxMessagesHandler, EventDispatcher
 from application.common.notifiers import TelegramNotifier
 from application.common.repositories import OutboxRepository
+from application.common.tools.dispatcher import ToolDispatcher
 from application.common.unit_of_work import UnitOfWork
 from application.task_instance.commands import (
     CompleteTaskInstanceHandler,
@@ -26,6 +27,7 @@ from application.task_template.commands import (
     DeactivateTaskTemplateHandler,
 )
 from application.task_template.queries import GetTaskTemplatesHandler
+from application.task_template.tools import CreateTaskTemplateTool
 from application.user.commands import GetOrCreateUserHandler
 from domain.task_instance.events import TaskReminderRequested
 from domain.task_instance.repository import TaskInstanceRepository
@@ -133,6 +135,24 @@ class ApplicationProvider(Provider):
         uow: UnitOfWork,
     ) -> MissOverdueTaskInstancesHandler:
         return MissOverdueTaskInstancesHandler(uow=uow)
+
+    @provide(scope=Scope.REQUEST)
+    def get_create_task_template_tool(
+        self, create_task_template_handler: CreateTaskTemplateHandler
+    ) -> CreateTaskTemplateTool:
+        return CreateTaskTemplateTool(handler=create_task_template_handler)
+
+    @provide(scope=Scope.REQUEST)
+    def get_tool_dispatcher(
+        self,
+        create_task_template_tool: CreateTaskTemplateTool,
+    ) -> ToolDispatcher:
+
+        return ToolDispatcher(
+            tools={
+                create_task_template_tool.name: create_task_template_tool,
+            }
+        )
 
 
 class DatabaseProvider(Provider):
