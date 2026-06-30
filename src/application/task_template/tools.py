@@ -1,7 +1,6 @@
 import pydantic
 
-from application.common.tools.base import Tool
-from application.common.tools.context import ToolContext
+from application.llm import Tool, ToolContext
 from application.task_template.commands import (
     CreateTaskTemplateCommand,
     CreateTaskTemplateHandler,

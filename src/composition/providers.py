@@ -4,6 +4,7 @@ from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from dishka import Provider, Scope, provide
+from openai import AsyncOpenAI
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -14,8 +15,11 @@ from sqlalchemy.ext.asyncio import (
 from application.common.events import DispatchOutboxMessagesHandler, EventDispatcher
 from application.common.notifiers import TelegramNotifier
 from application.common.repositories import OutboxRepository
-from application.common.tools.dispatcher import ToolDispatcher
 from application.common.unit_of_work import UnitOfWork
+from application.llm.assistant_service import AssistantService
+from application.llm.chat_client import ChatClient
+from application.llm.dispatcher import ToolDispatcher
+from application.llm.repositories import ConversationHistoryRepository
 from application.task_instance.commands import (
     CompleteTaskInstanceHandler,
     MissOverdueTaskInstancesHandler,
@@ -46,6 +50,11 @@ from infrastructure.database.repositories.user import (
     SqlAlchemyUserRepository,
 )
 from infrastructure.database.unit_of_work import SqlAlchemyUnitOfWork
+from infrastructure.llm.openai_chat_client import OpenAIChatClient
+from infrastructure.memory.database import MemoryDatabase
+from infrastructure.memory.repositories.memory_conversation_history_repository import (
+    MemoryConversationHistoryRepository,
+)
 from infrastructure.notifiers import AiogramTelegramNotifier
 from settings import Settings
 
@@ -154,6 +163,51 @@ class ApplicationProvider(Provider):
             }
         )
 
+    @provide(scope=Scope.REQUEST)
+    def get_chat_client(self, settings: Settings) -> ChatClient:
+        assert settings.llm_model
+
+        return OpenAIChatClient(
+            client=AsyncOpenAI(
+                base_url=settings.llm_base_url, api_key=settings.llm_api_key
+            ),
+            model=settings.llm_model,
+            instructions="""
+                    Ты — ассистент управления личными задачами.
+
+                    Твоя задача — помогать пользователю управлять задачами через доступные инструменты.
+
+                    Правила:
+                    - Если пользователь просит создать, изменить, получить или завершить задачу — используй соответствующий tool.
+                    - Не выдумывай результаты выполнения операций. После вызова tool сообщай только то, что вернуло приложение.
+                    - Если для выполнения действия не хватает данных — задай уточняющий вопрос.
+                    - Не создавай задачу самостоятельно в тексте, если действие требует вызова tool.
+                    - Используй текущий контекст пользователя. user_id и текущее время уже передаются приложением и не должны запрашиваться у пользователя.
+                    - Отвечай на языке пользователя.
+
+                    Работа с датами:
+                    - Если пользователь использует относительные даты ("через 3 дня", "завтра", "после зарплаты"), сначала определи дату.
+                    - Если невозможно однозначно определить дату — уточни.
+                    - Не меняй часовые пояса самостоятельно. Приложение занимается преобразованием времени.
+                    """,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def get_assistant_service(
+        self,
+        user_repository: UserRepository,
+        conversation_repository: ConversationHistoryRepository,
+        chat_client: ChatClient,
+        tool_dispatcher: ToolDispatcher,
+    ) -> AssistantService:
+
+        return AssistantService(
+            user_repository=user_repository,
+            history_repository=conversation_repository,
+            chat_client=chat_client,
+            tool_dispatcher=tool_dispatcher,
+        )
+
 
 class DatabaseProvider(Provider):
     @provide(scope=Scope.APP)
@@ -192,6 +246,19 @@ class DatabaseProvider(Provider):
             except Exception:
                 await session.rollback()
                 raise
+
+    @provide(scope=Scope.APP)
+    async def memory_db(
+        self,
+    ) -> MemoryDatabase:
+        return MemoryDatabase()
+
+    @provide(scope=Scope.REQUEST)
+    async def conversation_repository(
+        self,
+        memory_db: MemoryDatabase,
+    ) -> ConversationHistoryRepository:
+        return MemoryConversationHistoryRepository(db=memory_db)
 
 
 class InfrastructureProvider(Provider):

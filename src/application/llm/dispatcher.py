@@ -1,9 +1,8 @@
-import typing
-
 import pydantic
 
-from application.common.tools.base import Tool
-from application.common.tools.context import ToolContext
+from application.llm.base import Tool
+from application.llm.context import ToolContext
+from application.llm.models import ToolDefinition
 
 
 class ToolDispatcher:
@@ -13,7 +12,7 @@ class ToolDispatcher:
     ):
         self.tools = tools
 
-    async def dispatch_tool(
+    async def dispatch(
         self,
         tool_name: str,
         raw_arguments: dict,
@@ -26,21 +25,21 @@ class ToolDispatcher:
         return await tool.call(arguments, context=context)
 
     @staticmethod
-    def _create_tool_schema(
+    def _create_tool_definition(
         name: str,
         description: str,
         model: type[pydantic.BaseModel],
-    ) -> dict[str, typing.Any]:
-        return {
-            "type": "function",
-            "name": name,
-            "description": description,
-            "parameters": model.model_json_schema(),
-        }
+    ) -> ToolDefinition:
+        return ToolDefinition(
+            type="function",
+            name=name,
+            description=description,
+            parameters=model.model_json_schema(),
+        )
 
-    def get_schemas(self) -> list[dict[str, typing.Any]]:
+    def get_tool_definitions(self) -> list[ToolDefinition]:
         return [
-            self._create_tool_schema(
+            self._create_tool_definition(
                 name=tool.name, description=tool.description, model=tool.input_model
             )
             for tool in self.tools.values()

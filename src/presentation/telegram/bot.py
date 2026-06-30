@@ -6,7 +6,8 @@ from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
-from application.common.tools.dispatcher import ToolDispatcher
+from application.llm.assistant_service import AssistantService
+from application.llm.context import ToolContext
 from application.task_instance.commands import (
     CompleteTaskInstanceCommand,
     CompleteTaskInstanceHandler,
@@ -284,8 +285,19 @@ async def create_yearly(
 @dp.message()
 @inject
 async def echo_handler(
-    message: Message, tool_dispatcher: FromDishka[ToolDispatcher]
+    message: Message,
+    conversation_service: FromDishka[AssistantService],
+    user_id: uuid.UUID,
 ) -> None:
-    tools = tool_dispatcher.get_schemas()
+    if not message.text:
+        await message.answer("No text provided.")
+        return
 
-    await message.answer(str(tools))
+    response = await conversation_service.reply(
+        message=message.text,
+        context=ToolContext(
+            user_id=user_id, now=datetime.datetime.now(tz=datetime.UTC)
+        ),
+    )
+
+    await message.answer(response)

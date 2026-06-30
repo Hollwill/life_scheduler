@@ -1,6 +1,7 @@
 import typing
 import uuid
 
+from application.llm.models import ChatMessage
 from domain.common.event import DomainEvent
 from domain.task_instance.aggregate import TaskInstance
 from domain.task_template.aggregate import TaskTemplate
@@ -14,6 +15,7 @@ class MemoryDatabase:
         self.task_templates: dict[uuid.UUID, TaskTemplate] = {}
         self.users: dict[uuid.UUID, User] = {}
         self.outbox: dict[uuid.UUID, OutboxModel] = {}
+        self.chat_messages_by_user: dict[uuid.UUID, list[ChatMessage]] = {}
 
     def collect_events(self) -> typing.Collection[DomainEvent]:
         events = []

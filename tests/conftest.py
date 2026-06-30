@@ -26,6 +26,9 @@ from infrastructure.memory.repositories import (
     MemoryTaskTemplateRepository,
     MemoryUserRepository,
 )
+from infrastructure.memory.repositories.memory_conversation_history_repository import (
+    MemoryConversationHistoryRepository,
+)
 from infrastructure.memory.repositories.memory_outbox_repository import (
     MemoryOutboxRepository,
 )
@@ -97,6 +100,13 @@ def memory_task_instance_repository(
 @pytest.fixture
 def memory_user_repository(db_memory: MemoryDatabase) -> MemoryUserRepository:
     return MemoryUserRepository(db_memory)
+
+
+@pytest.fixture
+def memory_conversation_history_repository(
+    db_memory: MemoryDatabase,
+) -> MemoryConversationHistoryRepository:
+    return MemoryConversationHistoryRepository(db_memory)
 
 
 @pytest.fixture

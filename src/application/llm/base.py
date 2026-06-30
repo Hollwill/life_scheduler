@@ -3,7 +3,7 @@ import typing
 
 import pydantic
 
-from application.common.tools.context import ToolContext
+from application.llm.context import ToolContext
 
 
 class Tool(abc.ABC):
