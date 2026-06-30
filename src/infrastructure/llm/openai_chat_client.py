@@ -34,9 +34,11 @@ class OpenAIChatClient(ChatClient):
             tools=[
                 {
                     "type": tool.type,
-                    "name": tool.name,
-                    "description": tool.description,
-                    "parameters": tool.parameters,
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.parameters,
+                    },
                 }
                 for tool in tools
             ],

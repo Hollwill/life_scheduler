@@ -168,10 +168,12 @@ async def test_chat_serializes_messages_and_tools():
     assert kwargs["tools"] == [
         {
             "type": "function",
-            "name": "create_task",
-            "description": "Creates task",
-            "parameters": {
-                "type": "object",
+            "function": {
+                "name": "create_task",
+                "description": "Creates task",
+                "parameters": {
+                    "type": "object",
+                },
             },
         }
     ]
