@@ -166,12 +166,13 @@ async def test_reply_executes_tool_and_then_returns_final_response(
     assert chat_client.chat.await_count == 2
 
     messages = await memory_conversation_history_repository.get(user.id)
-    assert len(messages) == 3
+    assert len(messages) == 4
 
     assert (
         ChatMessage(
             role="tool",
             content=str({"task_id": "123"}),
+            tool_call_id="call_1",
             created_at=now,
         )
         in messages

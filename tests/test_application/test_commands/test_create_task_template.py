@@ -66,7 +66,8 @@ async def test_create_task_template_handler_creates_and_saves_template(
         now=datetime.datetime.now(),
     )
 
-    task_template_public_id = await handler.handle(command)
+    result = await handler.handle(command)
+    task_template_public_id = result["task_template_public_id"]
 
     saved_template = await memory_task_template_repository.get_by_public_id(
         task_template_public_id
@@ -87,7 +88,10 @@ async def test_create_task_template_handler_creates_and_saves_template(
 
     assert saved_template.is_active is True
 
-    assert task_template_public_id == saved_template.public_id
+    assert result == {
+        "status": "success",
+        "task_template_public_id": saved_template.public_id,
+    }
 
 
 @pytest.mark.parametrize("user", (UserFactory.build(),))

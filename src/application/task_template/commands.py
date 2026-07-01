@@ -1,6 +1,7 @@
 import dataclasses
 import datetime
 import logging
+import typing
 import uuid
 from itertools import groupby
 from zoneinfo import ZoneInfo
@@ -37,7 +38,7 @@ class CreateTaskTemplateHandler(CommandHandler[CreateTaskTemplateCommand, str]):
     ) -> None:
         self.uow: UnitOfWork = uow
 
-    async def handle(self, command: CreateTaskTemplateCommand) -> str:
+    async def handle(self, command: CreateTaskTemplateCommand) -> dict[str, typing.Any]:
         async with self.uow:
             user: User | None = await self.uow.users.get_by_id(command.user_id)
             if user is None:
@@ -51,7 +52,7 @@ class CreateTaskTemplateHandler(CommandHandler[CreateTaskTemplateCommand, str]):
                 now=command.now,
             )
             await self.uow.task_templates.save(task_template)
-        return task_template.public_id
+        return {"status": "success", "task_template_public_id": task_template.public_id}
 
 
 @dataclasses.dataclass

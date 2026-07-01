@@ -1,3 +1,5 @@
+import typing
+
 import pydantic
 
 from application.llm.base import Tool
@@ -27,7 +29,9 @@ class CreateTaskTemplateTool(Tool):
     ):
         self.handler = handler
 
-    async def call(self, payload: CreateTaskTemplateToolInput, context: ToolContext):
+    async def call(
+        self, payload: CreateTaskTemplateToolInput, context: ToolContext
+    ) -> dict[str, typing.Any]:
 
         command = CreateTaskTemplateCommand(
             user_id=context.user_id,
@@ -37,4 +41,4 @@ class CreateTaskTemplateTool(Tool):
             now=context.now,
         )
 
-        await self.handler.handle(command=command)
+        return await self.handler.handle(command=command)

@@ -56,18 +56,19 @@ class AssistantService:
             logger.info("Received response from LLM: %s", response.content)
             logger.info("Received tool calls: %s", response.tool_calls)
 
+            assistant_message = ChatMessage(
+                role="assistant",
+                content=response.content,
+                tool_calls=response.tool_calls if response.tool_calls else None,
+                created_at=context.now,
+            )
+
+            await self._history_repository.append(
+                user_id,
+                assistant_message,
+            )
+
             if not response.tool_calls:
-                assistant_message = ChatMessage(
-                    role="assistant",
-                    content=response.content,
-                    created_at=context.now,
-                )
-
-                await self._history_repository.append(
-                    user_id,
-                    assistant_message,
-                )
-
                 current_history = await self._history_repository.get(user_id)
                 logger.info("Current history: %s", current_history)
 
@@ -83,6 +84,7 @@ class AssistantService:
 
                 tool_message = ChatMessage(
                     role="tool",
+                    tool_call_id=tool_call.id,
                     content=str(tool_result),
                     created_at=context.now,
                 )
