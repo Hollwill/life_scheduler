@@ -31,7 +31,7 @@ from application.task_template.commands import (
     DeactivateTaskTemplateHandler,
 )
 from application.task_template.queries import GetTaskTemplatesHandler
-from application.task_template.tools import CreateTaskTemplateTool
+from application.task_template.tools import CreateTaskTemplateTool, GetTaskTemplatesTool
 from application.user.commands import GetOrCreateUserHandler
 from domain.task_instance.events import TaskReminderRequested
 from domain.task_instance.repository import TaskInstanceRepository
@@ -146,20 +146,28 @@ class ApplicationProvider(Provider):
         return MissOverdueTaskInstancesHandler(uow=uow)
 
     @provide(scope=Scope.REQUEST)
-    def get_create_task_template_tool(
+    def provide_create_task_template_tool(
         self, create_task_template_handler: CreateTaskTemplateHandler
     ) -> CreateTaskTemplateTool:
         return CreateTaskTemplateTool(handler=create_task_template_handler)
 
     @provide(scope=Scope.REQUEST)
+    def provide_get_task_templates_tool(
+        self, get_task_templates_handler: GetTaskTemplatesHandler
+    ) -> GetTaskTemplatesTool:
+        return GetTaskTemplatesTool(handler=get_task_templates_handler)
+
+    @provide(scope=Scope.REQUEST)
     def get_tool_dispatcher(
         self,
         create_task_template_tool: CreateTaskTemplateTool,
+        get_task_templates_tool: GetTaskTemplatesTool,
     ) -> ToolDispatcher:
 
         return ToolDispatcher(
             tools={
                 create_task_template_tool.name: create_task_template_tool,
+                get_task_templates_tool.name: get_task_templates_tool,
             }
         )
 
