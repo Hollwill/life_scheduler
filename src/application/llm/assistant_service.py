@@ -34,10 +34,8 @@ class AssistantService:
     ) -> str:
         logger.info("Replying to user %s with message: %s", context.user_id, message)
         user_id = context.user_id
-        history = await self._load_history(
-            user_id=user_id,
-            now=context.now,
-        )
+
+        await self._clear_old_history(user_id, context.now)
 
         user_message = ChatMessage(
             role="user",
@@ -45,14 +43,19 @@ class AssistantService:
             created_at=context.now,
         )
 
-        history.append(user_message)
         await self._history_repository.append(user_id, user_message)
 
         while True:
+            history = await self._load_history(
+                user_id=user_id,
+                now=context.now,
+            )
+
             response = await self._chat_client.chat(
                 messages=history,
                 tools=self._tool_dispatcher.get_tool_definitions(),
             )
+            logger.info("Received response from LLM for history: %s", history)
             logger.info("Received response from LLM: %s", response.content)
             logger.info("Received tool calls: %s", response.tool_calls)
 
@@ -89,8 +92,6 @@ class AssistantService:
                     created_at=context.now,
                 )
 
-                history.append(tool_message)
-
                 await self._history_repository.append(
                     user_id,
                     tool_message,
@@ -101,10 +102,18 @@ class AssistantService:
         user_id: uuid.UUID,
         now: datetime.datetime,
     ) -> list[ChatMessage]:
+        await self._clear_old_history(user_id, now)
+
+        history = list(await self._history_repository.get(user_id))
+
+        return history
+
+    async def _clear_old_history(
+        self,
+        user_id: uuid.UUID,
+        now: datetime.datetime,
+    ):
         history = list(await self._history_repository.get(user_id))
 
         if history and now - history[-1].created_at > self.DIALOG_TTL:
             await self._history_repository.clear(user_id)
-            return []
-
-        return history
