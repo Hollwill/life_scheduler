@@ -50,12 +50,12 @@ class AssistantService:
                 user_id=user_id,
                 now=context.now,
             )
+            logger.info("Current history: %s", history)
 
             response = await self._chat_client.chat(
                 messages=history,
                 tools=self._tool_dispatcher.get_tool_definitions(),
             )
-            logger.info("Received response from LLM for history: %s", history)
             logger.info("Received response from LLM: %s", response.content)
             logger.info("Received tool calls: %s", response.tool_calls)
 
@@ -72,9 +72,6 @@ class AssistantService:
             )
 
             if not response.tool_calls:
-                current_history = await self._history_repository.get(user_id)
-                logger.info("Current history: %s", current_history)
-
                 return response.content
 
             for tool_call in response.tool_calls:
