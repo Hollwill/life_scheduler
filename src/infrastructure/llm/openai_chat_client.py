@@ -1,4 +1,5 @@
 import json
+import logging
 import typing
 
 from openai import AsyncOpenAI
@@ -10,6 +11,8 @@ from application.llm.models import (
     ToolCall,
     ToolDefinition,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class OpenAIChatClient(ChatClient):
@@ -58,6 +61,11 @@ class OpenAIChatClient(ChatClient):
                         arguments=json.loads(tool_call.function.arguments),
                     )
                 )
+        logger.info(
+            "Received response from OpenAI: %s with tool calls %s",
+            message.content,
+            tool_calls,
+        )
 
         return ChatResponse(
             content=message.content or "",

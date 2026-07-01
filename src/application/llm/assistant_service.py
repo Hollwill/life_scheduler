@@ -1,4 +1,5 @@
 import datetime
+import logging
 import uuid
 
 from application.llm.chat_client import ChatClient
@@ -7,6 +8,8 @@ from application.llm.dispatcher import ToolDispatcher
 from application.llm.models import ChatMessage
 from application.llm.repositories import ConversationHistoryRepository
 from domain.user.repository import UserRepository
+
+logger = logging.getLogger(__name__)
 
 
 class AssistantService:
@@ -29,6 +32,7 @@ class AssistantService:
         message: str,
         context: ToolContext,
     ) -> str:
+        logger.info("Replying to user %s with message: %s", context.user_id, message)
         user_id = context.user_id
         history = await self._load_history(
             user_id=user_id,
@@ -49,6 +53,8 @@ class AssistantService:
                 messages=history,
                 tools=self._tool_dispatcher.get_tool_definitions(),
             )
+            logger.info("Received response from LLM: %s", response.content)
+            logger.info("Received tool calls: %s", response.tool_calls)
 
             if not response.tool_calls:
                 assistant_message = ChatMessage(
@@ -62,6 +68,9 @@ class AssistantService:
                     assistant_message,
                 )
 
+                current_history = await self._history_repository.get(user_id)
+                logger.info("Current history: %s", current_history)
+
                 return response.content
 
             for tool_call in response.tool_calls:
@@ -70,6 +79,7 @@ class AssistantService:
                     raw_arguments=tool_call.arguments,
                     context=context,
                 )
+                logger.info("Received %s tool result: %s", tool_call.name, tool_result)
 
                 tool_message = ChatMessage(
                     role="tool",
