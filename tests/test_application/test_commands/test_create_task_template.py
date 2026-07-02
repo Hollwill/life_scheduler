@@ -6,12 +6,12 @@ from application.task_template.commands import (
     CreateTaskTemplateCommand,
     CreateTaskTemplateHandler,
 )
-from application.task_template.exceptions import UserNotFoundException
 from application.task_template.schemas import (
     TriggerPayload,
     WeeklyTriggerPayload,
     trigger_payload_adapter,
 )
+from application.user.exceptions import UserNotFoundException
 from domain.task_template.aggregate import TaskTemplate
 from domain.task_template.entities import WeeklyTrigger
 from domain.task_template.value_objects import TriggerType

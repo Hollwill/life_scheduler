@@ -8,12 +8,10 @@ from zoneinfo import ZoneInfo
 
 from application.common.base import CommandHandler
 from application.common.unit_of_work import UnitOfWork
-from application.task_template.exceptions import (
-    TaskTemplateNotFoundException,
-    UserNotFoundException,
-)
+from application.task_template.exceptions import TaskTemplateNotFoundException
 from application.task_template.schemas import TriggerPayload
 from application.task_template.trigger_mapper import TriggerMapper
+from application.user.exceptions import UserNotFoundException
 from domain.task_instance.aggregate import TaskInstance
 from domain.task_template.aggregate import TaskTemplate
 from domain.user.aggregate import User
