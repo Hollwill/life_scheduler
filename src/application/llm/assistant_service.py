@@ -50,7 +50,8 @@ class AssistantService:
                 user_id=user_id,
                 now=context.now,
             )
-            logger.info("Current history: %s", history)
+
+            logger.info("Current history: %s", "\n".join(map(str, history)))
 
             response = await self._chat_client.chat(
                 messages=history,
