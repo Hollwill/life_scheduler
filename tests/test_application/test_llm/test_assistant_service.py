@@ -11,6 +11,7 @@ from application.llm.models import (
     ToolCall,
     ToolDefinition,
 )
+from application.llm.prompt_builder import PromptBuilder
 from application.llm.repositories import ConversationHistoryRepository
 from domain.user.aggregate import User
 from domain.user.repository import UserRepository
@@ -54,6 +55,7 @@ async def test_reply_returns_assistant_response_and_saves_messages(
         history_repository=memory_conversation_history_repository,
         chat_client=chat_client,
         tool_dispatcher=tool_dispatcher,
+        prompt_builder=PromptBuilder(),
     )
 
     result = await service.reply(
@@ -140,6 +142,7 @@ async def test_reply_executes_tool_and_then_returns_final_response(
         user_repository=memory_user_repository,
         chat_client=chat_client,
         tool_dispatcher=tool_dispatcher,
+        prompt_builder=PromptBuilder(),
     )
 
     result = await service.reply(
@@ -212,6 +215,7 @@ async def test_reply_uses_existing_history(
         user_repository=memory_user_repository,
         chat_client=chat_client,
         tool_dispatcher=tool_dispatcher,
+        prompt_builder=PromptBuilder(),
     )
 
     await service.reply(
@@ -289,6 +293,7 @@ async def test_reply_clears_history_when_ttl_expired(
         user_repository=memory_user_repository,
         chat_client=chat_client,
         tool_dispatcher=tool_dispatcher,
+        prompt_builder=PromptBuilder(),
     )
 
     await service.reply(

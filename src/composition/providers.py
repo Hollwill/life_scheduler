@@ -19,6 +19,7 @@ from application.common.unit_of_work import UnitOfWork
 from application.llm.assistant_service import AssistantService
 from application.llm.chat_client import ChatClient
 from application.llm.dispatcher import ToolDispatcher
+from application.llm.prompt_builder import PromptBuilder
 from application.llm.repositories import ConversationHistoryRepository
 from application.task_instance.commands import (
     CompleteTaskInstanceHandler,
@@ -196,33 +197,11 @@ class ApplicationProvider(Provider):
                 base_url=settings.llm_base_url, api_key=settings.llm_api_key
             ),
             model=settings.llm_model,
-            instructions="""
-                    Ты — ассистент управления личными задачами.
-
-                    Твоя задача — помогать пользователю управлять задачами через доступные инструменты.
-
-                    Правила:
-                    - Если пользователь просит создать, изменить, получить или завершить задачу — используй соответствующий tool.
-                    - Не выдумывай результаты выполнения операций. После вызова tool сообщай только то, что вернуло приложение.
-                    - Если для выполнения действия не хватает данных — задай уточняющий вопрос.
-                    - Не создавай задачу самостоятельно в тексте, если действие требует вызова tool.
-                    - Используй текущий контекст пользователя. user_id и текущее время уже передаются приложением и не должны запрашиваться у пользователя.
-                    - Перед созданием шаблона задачи проверь, возможно нужный шаблон уже есть.
-                    - Если швблон уже есть, уточни у пользователя, действительно ли нужно создать новый.
-                    - Отвечай на языке пользователя.
-
-                    Работа с датами:
-                    - Если пользователь использует относительные даты ("через 3 дня", "завтра", "после зарплаты"), сначала определи дату.
-                    - Если невозможно однозначно определить дату — уточни.
-                    - Не меняй часовые пояса самостоятельно. Приложение занимается преобразованием времени.
-                    - Никогда не используй время, полученное в предыдущих сообщениях диалога.
-                    - Время быстро устаревает.
-                    - Каждый раз, когда необходимо вычислить относительную дату или время ("через 3 минуты", "через час", "сегодня вечером", "завтра утром"), сначала получи текущее время через инструмент.
-                    - Только после получения актуального времени вычисляй дату и вызывай инструмент создания задачи.
-                    - Не полагайся на память модели и прошлые сообщения при работе с текущим временем.
-                    - В рамках этого симулированного окружения каждый вызов функции `get_user_now` возвращает актуальную (на момент вызова) копию времени. Однако в реальности время меняется непрерывно, поэтому перед любой операцией, где точность времени критична (например, планирование задачи), рекомендуется явно вызывать `get_user_now` заново.
-                    """,
         )
+
+    @provide(scope=Scope.REQUEST)
+    def get_prompt_builder(self) -> PromptBuilder:
+        return PromptBuilder()
 
     @provide(scope=Scope.REQUEST)
     def get_assistant_service(
@@ -231,6 +210,7 @@ class ApplicationProvider(Provider):
         conversation_repository: ConversationHistoryRepository,
         chat_client: ChatClient,
         tool_dispatcher: ToolDispatcher,
+        prompt_builder: PromptBuilder,
     ) -> AssistantService:
 
         return AssistantService(
@@ -238,6 +218,7 @@ class ApplicationProvider(Provider):
             history_repository=conversation_repository,
             chat_client=chat_client,
             tool_dispatcher=tool_dispatcher,
+            prompt_builder=prompt_builder,
         )
 
 

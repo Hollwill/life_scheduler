@@ -17,20 +17,27 @@ class OpenAIChatClient(ChatClient):
         self,
         client: AsyncOpenAI,
         model: str,
-        instructions: str,
     ) -> None:
         self._client = client
         self._model = model
-        self._instructions = instructions
 
     async def chat(
         self,
+        developer_prompt: str,
         messages: list[ChatMessage],
         tools: list[ToolDefinition],
     ) -> ChatResponse:
         response = await self._client.chat.completions.create(
             model=self._model,
-            messages=[self._serialize_message(message) for message in messages],
+            messages=[
+                self._serialize_message(message)
+                for message in (
+                    ChatMessage(
+                        role="developer", content=developer_prompt, created_at=None
+                    ),
+                    *messages,
+                )
+            ],
             tools=[
                 {
                     "type": tool.type,

@@ -31,10 +31,10 @@ async def test_chat_returns_assistant_response(now: datetime.datetime):
     chat_client = OpenAIChatClient(
         client=client,
         model="gpt-4o-mini",
-        instructions="",
     )
 
     result = await chat_client.chat(
+        developer_prompt="",
         messages=[
             ChatMessage(
                 role="user",
@@ -85,10 +85,10 @@ async def test_chat_returns_tool_calls():
     chat_client = OpenAIChatClient(
         client=client,
         model="gpt-4o-mini",
-        instructions="",
     )
 
     result = await chat_client.chat(
+        developer_prompt="",
         messages=[],
         tools=[],
     )
@@ -127,10 +127,10 @@ async def test_chat_serializes_messages_and_tools():
     chat_client = OpenAIChatClient(
         client=client,
         model="gpt-4o-mini",
-        instructions="system prompt",
     )
 
     await chat_client.chat(
+        developer_prompt="",
         messages=[
             ChatMessage(
                 role="user",
@@ -160,9 +160,13 @@ async def test_chat_serializes_messages_and_tools():
 
     assert kwargs["messages"] == [
         {
+            "role": "developer",
+            "content": "",
+        },
+        {
             "role": "user",
             "content": "Hello",
-        }
+        },
     ]
 
     assert kwargs["tools"] == [

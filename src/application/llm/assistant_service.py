@@ -6,6 +6,7 @@ from application.llm.chat_client import ChatClient
 from application.llm.context import ToolContext
 from application.llm.dispatcher import ToolDispatcher
 from application.llm.models import ChatMessage
+from application.llm.prompt_builder import PromptBuilder
 from application.llm.repositories import ConversationHistoryRepository
 from domain.user.repository import UserRepository
 
@@ -21,11 +22,13 @@ class AssistantService:
         history_repository: ConversationHistoryRepository,
         chat_client: ChatClient,
         tool_dispatcher: ToolDispatcher,
+        prompt_builder: PromptBuilder,
     ) -> None:
         self._user_repository = user_repository
         self._history_repository = history_repository
         self._chat_client = chat_client
         self._tool_dispatcher = tool_dispatcher
+        self._prompt_builder = prompt_builder
 
     async def reply(
         self,
@@ -33,9 +36,14 @@ class AssistantService:
         context: ToolContext,
     ) -> str:
         logger.info("Replying to user %s with message: %s", context.user_id, message)
-        user_id = context.user_id
 
-        await self._clear_old_history(user_id, context.now)
+        user = await self._user_repository.get_by_id(user_id=context.user_id)
+        if not user:
+            raise ValueError(f"User with id {context.user_id} not found")
+
+        developer_prompt = self._prompt_builder.build(context, user)
+
+        await self._clear_old_history(user.id, context.now)
 
         user_message = ChatMessage(
             role="user",
@@ -43,17 +51,18 @@ class AssistantService:
             created_at=context.now,
         )
 
-        await self._history_repository.append(user_id, user_message)
+        await self._history_repository.append(user.id, user_message)
 
         while True:
             history = await self._load_history(
-                user_id=user_id,
+                user_id=user.id,
                 now=context.now,
             )
 
             logger.info("Current history: %s", "\n".join(map(str, history)))
 
             response = await self._chat_client.chat(
+                developer_prompt=developer_prompt,
                 messages=history,
                 tools=self._tool_dispatcher.get_tool_definitions(),
             )
@@ -68,7 +77,7 @@ class AssistantService:
             )
 
             await self._history_repository.append(
-                user_id,
+                user.id,
                 assistant_message,
             )
 
@@ -91,7 +100,7 @@ class AssistantService:
                 )
 
                 await self._history_repository.append(
-                    user_id,
+                    user.id,
                     tool_message,
                 )
 

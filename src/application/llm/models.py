@@ -7,7 +7,7 @@ import typing
 class ChatMessage:
     role: typing.Literal["system", "user", "assistant", "tool"]
     content: str
-    created_at: datetime.datetime
+    created_at: datetime.datetime | None = None
 
     tool_calls: list[ToolCall] | None = None
 

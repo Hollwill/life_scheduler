@@ -7,6 +7,7 @@ class ChatClient(abc.ABC):
     @abc.abstractmethod
     async def chat(
         self,
+        developer_prompt: str,
         messages: list[ChatMessage],
         tools: list[ToolDefinition],
     ) -> ChatResponse:
