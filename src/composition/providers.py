@@ -34,8 +34,6 @@ from application.task_template.commands import (
 from application.task_template.queries import GetTaskTemplatesHandler
 from application.task_template.tools import CreateTaskTemplateTool, GetTaskTemplatesTool
 from application.user.commands import GetOrCreateUserHandler
-from application.user.queries import GetUserNowHandler
-from application.user.tools import GetUserNowTool
 from domain.task_instance.events import TaskReminderRequested
 from domain.task_instance.repository import TaskInstanceRepository
 from domain.task_template.repository import TaskTemplateRepository
@@ -149,12 +147,6 @@ class ApplicationProvider(Provider):
         return MissOverdueTaskInstancesHandler(uow=uow)
 
     @provide(scope=Scope.REQUEST)
-    def provide_get_user_now_handler(
-        self, user_repository: UserRepository
-    ) -> GetUserNowHandler:
-        return GetUserNowHandler(user_repository=user_repository)
-
-    @provide(scope=Scope.REQUEST)
     def get_create_task_template_tool(
         self, create_task_template_handler: CreateTaskTemplateHandler
     ) -> CreateTaskTemplateTool:
@@ -167,24 +159,16 @@ class ApplicationProvider(Provider):
         return GetTaskTemplatesTool(handler=get_task_templates_handler)
 
     @provide(scope=Scope.REQUEST)
-    def provide_get_user_now_tool(
-        self, get_user_now_handler: GetUserNowHandler
-    ) -> GetUserNowTool:
-        return GetUserNowTool(handler=get_user_now_handler)
-
-    @provide(scope=Scope.REQUEST)
     def get_tool_dispatcher(
         self,
         create_task_template_tool: CreateTaskTemplateTool,
         get_task_templates_tool: GetTaskTemplatesTool,
-        get_user_now_tool: GetUserNowTool,
     ) -> ToolDispatcher:
 
         return ToolDispatcher(
             tools={
                 create_task_template_tool.name: create_task_template_tool,
                 get_task_templates_tool.name: get_task_templates_tool,
-                get_user_now_tool.name: get_user_now_tool,
             }
         )
 
