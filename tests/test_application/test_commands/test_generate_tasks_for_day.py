@@ -104,11 +104,13 @@ async def test_generate_tasks_for_day(
         for task_instance in task_instances:
             await memory_uow.task_instances.save(task_instance)
 
-    command = GenerateTasksForDayCommand(day=datetime.date.fromisoformat("2021-01-10"))
+    command = GenerateTasksForDayCommand(
+        day=datetime.date.fromisoformat("2021-01-10"),
+        now=now,
+    )
 
     await GenerateTasksForDayHandler(
         uow=memory_uow,
-        now=now,
     ).handle(command)
 
     task_instances = await memory_uow.task_instances.get_all_by_day(command.day)
@@ -189,8 +191,12 @@ async def test_generate_tasks_for_day_respects_user_timezone(
 
     await GenerateTasksForDayHandler(
         uow=memory_uow,
-        now=now,
-    ).handle(GenerateTasksForDayCommand(day=command_day))
+    ).handle(
+        GenerateTasksForDayCommand(
+            day=command_day,
+            now=now,
+        )
+    )
 
     task_instances = await memory_uow.task_instances.get_all_by_day(command_day)
 

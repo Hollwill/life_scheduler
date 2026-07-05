@@ -124,16 +124,15 @@ class DeactivateTaskTemplateHandler(
 @dataclasses.dataclass
 class GenerateTasksForDayCommand:
     day: datetime.date
+    now: datetime.datetime
 
 
 class GenerateTasksForDayHandler(CommandHandler[GenerateTasksForDayCommand, None]):
     def __init__(
         self,
         uow: UnitOfWork,
-        now: datetime.datetime,
     ) -> None:
         self.uow = uow
-        self.now = now
 
     async def handle(self, command: GenerateTasksForDayCommand) -> None:
         async with self.uow:
@@ -166,7 +165,7 @@ class GenerateTasksForDayHandler(CommandHandler[GenerateTasksForDayCommand, None
                         logger.info(
                             "Task not generated cause template %s not occurs on %s",
                             task_template.id,
-                            self.now.isoformat(),
+                            command.now.isoformat(),
                         )
                         continue
 
@@ -183,7 +182,7 @@ class GenerateTasksForDayHandler(CommandHandler[GenerateTasksForDayCommand, None
                         description=task_template.description,
                         occurrence_date=command.day,
                         scheduled_at=scheduled_at,
-                        now=self.now,
+                        now=command.now,
                     )
 
                     await self.uow.task_instances.save(task_instance)
@@ -191,7 +190,7 @@ class GenerateTasksForDayHandler(CommandHandler[GenerateTasksForDayCommand, None
                         "Generated task instance %s for task template %s on date %s, scheduled at %s",
                         task_instance.id,
                         task_template.id,
-                        self.now.isoformat(),
+                        command.now.isoformat(),
                         scheduled_at.isoformat() if scheduled_at else None,
                     )
 

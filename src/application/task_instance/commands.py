@@ -32,21 +32,20 @@ class CompleteTaskInstanceHandler(CommandHandler[CompleteTaskInstanceCommand, No
 
 @dataclasses.dataclass
 class GenerateTaskRemindersCommand:
-    pass
+    now: datetime.datetime
 
 
 class GenerateTaskRemindersHandler(CommandHandler[GenerateTaskRemindersCommand, None]):
-    def __init__(self, uow: UnitOfWork, now: datetime.datetime) -> None:
+    def __init__(self, uow: UnitOfWork) -> None:
         self.uow = uow
-        self.now = now
 
     async def handle(self, command: GenerateTaskRemindersCommand) -> None:
         async with self.uow:
             for task_instance in await self.uow.task_instances.get_all_for_remind(
-                now=self.now
+                now=command.now
             ):
                 # produces reminder event
-                task_instance.mark_reminded(now=self.now)
+                task_instance.mark_reminded(now=command.now)
                 await self.uow.task_instances.save(task_instance)
 
 

@@ -84,9 +84,9 @@ async def test_generate_task_reminders_handler_cases(
     reminded_at_before = task_instance.reminded_at
     await memory_task_instance_repository.save(task_instance)
 
-    handler = GenerateTaskRemindersHandler(uow=memory_uow, now=now)
+    handler = GenerateTaskRemindersHandler(uow=memory_uow)
 
-    await handler.handle(GenerateTaskRemindersCommand())
+    await handler.handle(GenerateTaskRemindersCommand(now=now))
 
     updated = await memory_task_instance_repository.get_by_id(task_instance.id)
 

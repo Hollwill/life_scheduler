@@ -1,8 +1,10 @@
+import datetime
 from collections.abc import AsyncIterable
 
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dishka import Provider, Scope, provide
 from openai import AsyncOpenAI
 from sqlalchemy.ext.asyncio import (
@@ -23,6 +25,9 @@ from application.llm.prompt_builder import PromptBuilder
 from application.llm.repositories import ConversationHistoryRepository
 from application.task_instance.commands import (
     CompleteTaskInstanceHandler,
+    GenerateTaskRemindersCommand,
+    GenerateTaskRemindersHandler,
+    MissOverdueTaskInstancesCommand,
     MissOverdueTaskInstancesHandler,
 )
 from application.task_instance.event_handlers import SendTelegramReminderHandler
@@ -30,6 +35,8 @@ from application.task_instance.queries import GetTaskInstancesHandler
 from application.task_template.commands import (
     CreateTaskTemplateHandler,
     DeactivateTaskTemplateHandler,
+    GenerateTasksForDayCommand,
+    GenerateTasksForDayHandler,
 )
 from application.task_template.queries import GetTaskTemplatesHandler
 from application.task_template.tools import CreateTaskTemplateTool, GetTaskTemplatesTool
@@ -205,6 +212,21 @@ class ApplicationProvider(Provider):
             prompt_builder=prompt_builder,
         )
 
+    @provide(scope=Scope.REQUEST)
+    def get_generate_task_reminders_handler(
+        self,
+        uow: UnitOfWork,
+    ) -> GenerateTaskRemindersHandler:
+        return GenerateTaskRemindersHandler(uow=uow)
+
+    @provide(scope=Scope.REQUEST)
+    def get_generate_tasks_for_day_handler(
+        self, uow: UnitOfWork
+    ) -> GenerateTasksForDayHandler:
+        return GenerateTasksForDayHandler(
+            uow=uow,
+        )
+
 
 class DatabaseProvider(Provider):
     @provide(scope=Scope.APP)
@@ -313,6 +335,57 @@ class InfrastructureProvider(Provider):
         return SqlAlchemyOutboxRepository(
             session=session,
         )
+
+
+class SchedulerProvider(Provider):
+    @provide(scope=Scope.APP)
+    def get_scheduler(
+        self,
+        generate_reminders_handler: GenerateTaskRemindersHandler,
+        generate_tasks_handler: GenerateTasksForDayHandler,
+        miss_overdue_task_instances_handler: MissOverdueTaskInstancesHandler,
+        dispatch_outbox_messages_handler: DispatchOutboxMessagesHandler,
+    ) -> AsyncIOScheduler:
+        scheduler = AsyncIOScheduler()
+
+        scheduler.add_job(
+            lambda: generate_reminders_handler.handle(
+                GenerateTaskRemindersCommand(
+                    now=datetime.datetime.now(tz=datetime.UTC),
+                )
+            ),
+            "interval",
+            minutes=1,
+        )
+
+        scheduler.add_job(
+            lambda: generate_tasks_handler.handle(
+                GenerateTasksForDayCommand(
+                    day=datetime.date.today(),
+                    now=datetime.datetime.now(tz=datetime.UTC),
+                )
+            ),
+            "interval",
+            hours=1,
+        )
+
+        scheduler.add_job(
+            lambda: miss_overdue_task_instances_handler.handle(
+                MissOverdueTaskInstancesCommand(
+                    now=datetime.datetime.now(tz=datetime.UTC),
+                )
+            ),
+            "interval",
+            hours=1,
+        )
+
+        scheduler.add_job(
+            lambda: dispatch_outbox_messages_handler.handle(),
+            "interval",
+            seconds=10,
+        )
+
+        return scheduler
 
 
 class SettingsProvider(Provider):
