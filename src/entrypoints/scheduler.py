@@ -2,7 +2,6 @@ import asyncio
 import logging
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler_dishka import setup_dishka
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from composition.container import container
@@ -21,7 +20,8 @@ async def main():
 
     scheduler = await container.get(AsyncIOScheduler)
 
-    setup_dishka(container=container, scheduler=scheduler)
+    scheduler.start()
+    await asyncio.Event().wait()
 
 
 if __name__ == "__main__":

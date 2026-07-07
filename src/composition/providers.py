@@ -5,7 +5,7 @@ from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from dishka import Provider, Scope, provide
+from dishka import AsyncContainer, Provider, Scope, provide
 from openai import AsyncOpenAI
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -41,6 +41,7 @@ from application.task_template.commands import (
 from application.task_template.queries import GetTaskTemplatesHandler
 from application.task_template.tools import CreateTaskTemplateTool, GetTaskTemplatesTool
 from application.user.commands import GetOrCreateUserHandler
+from composition.utils import create_job
 from domain.task_instance.events import TaskReminderRequested
 from domain.task_instance.repository import TaskInstanceRepository
 from domain.task_template.repository import TaskTemplateRepository
@@ -341,48 +342,61 @@ class SchedulerProvider(Provider):
     @provide(scope=Scope.APP)
     def get_scheduler(
         self,
-        generate_reminders_handler: GenerateTaskRemindersHandler,
-        generate_tasks_handler: GenerateTasksForDayHandler,
-        miss_overdue_task_instances_handler: MissOverdueTaskInstancesHandler,
-        dispatch_outbox_messages_handler: DispatchOutboxMessagesHandler,
+        container: AsyncContainer,
+        # generate_tasks_handler: GenerateTasksForDayHandler,
+        # miss_overdue_task_instances_handler: MissOverdueTaskInstancesHandler,
+        # dispatch_outbox_messages_handler: DispatchOutboxMessagesHandler,
     ) -> AsyncIOScheduler:
         scheduler = AsyncIOScheduler()
 
         scheduler.add_job(
-            lambda: generate_reminders_handler.handle(
-                GenerateTaskRemindersCommand(
+            create_job(
+                container,
+                GenerateTaskRemindersHandler,
+                lambda: GenerateTaskRemindersCommand(
                     now=datetime.datetime.now(tz=datetime.UTC),
-                )
+                ),
             ),
             "interval",
             minutes=1,
+            name="generate_task_reminders",
         )
 
         scheduler.add_job(
-            lambda: generate_tasks_handler.handle(
-                GenerateTasksForDayCommand(
+            create_job(
+                container,
+                GenerateTasksForDayHandler,
+                lambda: GenerateTasksForDayCommand(
                     day=datetime.date.today(),
                     now=datetime.datetime.now(tz=datetime.UTC),
-                )
+                ),
             ),
             "interval",
             hours=1,
+            name="generate_tasks_for_day",
         )
 
         scheduler.add_job(
-            lambda: miss_overdue_task_instances_handler.handle(
-                MissOverdueTaskInstancesCommand(
+            create_job(
+                container,
+                MissOverdueTaskInstancesHandler,
+                lambda: MissOverdueTaskInstancesCommand(
                     now=datetime.datetime.now(tz=datetime.UTC),
-                )
+                ),
             ),
             "interval",
             hours=1,
+            name="miss_overdue_task_instances",
         )
 
         scheduler.add_job(
-            lambda: dispatch_outbox_messages_handler.handle(),
+            create_job(
+                container,
+                DispatchOutboxMessagesHandler,
+            ),
             "interval",
             seconds=10,
+            name="dispatch_outbox_messages",
         )
 
         return scheduler

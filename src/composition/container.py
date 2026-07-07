@@ -4,6 +4,7 @@ from composition.providers import (
     ApplicationProvider,
     DatabaseProvider,
     InfrastructureProvider,
+    SchedulerProvider,
     SettingsProvider,
 )
 
@@ -11,5 +12,6 @@ container = make_async_container(
     SettingsProvider(),
     DatabaseProvider(),
     InfrastructureProvider(),
+    SchedulerProvider(),
     ApplicationProvider(),
 )
