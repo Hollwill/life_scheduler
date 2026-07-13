@@ -372,7 +372,7 @@ class SchedulerProvider(Provider):
                 ),
             ),
             "interval",
-            hours=1,
+            minutes=1,
             name="generate_tasks_for_day",
         )
 
