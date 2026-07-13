@@ -1,13 +1,11 @@
 import asyncio
 import logging
-import socket
 import sys
 
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
-from aiohttp import TCPConnector
 from dishka.integrations.aiogram import setup_dishka
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -30,10 +28,7 @@ async def main() -> None:
 
     await init_db(engine)  # TODO: Унести инициализацию БД в миграции через alembic
 
-    # Force IPv4/IPv6 resolver based on your proxy's capabilities
-    connector = TCPConnector(family=socket.AF_INET6)
-
-    session = AiohttpSession(proxy=settings.proxy_url, connector=connector)
+    session = AiohttpSession(proxy=settings.proxy_url)
 
     bot = Bot(
         token=settings.telegram_bot_token,
