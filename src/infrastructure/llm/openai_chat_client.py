@@ -63,6 +63,7 @@ class OpenAIChatClient(ChatClient):
                         id=tool_call.id,
                         name=tool_call.function.name,
                         arguments=json.loads(tool_call.function.arguments),
+                        raw=tool_call.model_dump(mode="json"),
                     )
                 )
 
@@ -83,17 +84,14 @@ class OpenAIChatClient(ChatClient):
             result["content"] = message.content
 
         if message.tool_calls:
-            result["tool_calls"] = [
-                {
-                    "id": tool_call.id,
-                    "type": "function",
-                    "function": {
-                        "name": tool_call.name,
-                        "arguments": json.dumps(tool_call.arguments),
-                    },
-                }
-                for tool_call in message.tool_calls
-            ]
+            result["tool_calls"] = []
+
+            for tool_call in message.tool_calls:
+                raw = dict(tool_call.raw)
+
+                raw["function"]["arguments"] = json.dumps(tool_call.arguments)
+
+                result["tool_calls"].append(raw)
 
         if message.tool_call_id:
             result["tool_call_id"] = message.tool_call_id

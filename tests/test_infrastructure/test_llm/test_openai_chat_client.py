@@ -1,5 +1,6 @@
 import datetime
 import json
+from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
 from application.llm.models import (
@@ -102,6 +103,7 @@ async def test_chat_returns_tool_calls():
                 arguments={
                     "title": "Drink water",
                 },
+                raw=mock.ANY,
             ),
         ],
     )

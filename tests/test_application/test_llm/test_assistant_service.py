@@ -126,6 +126,7 @@ async def test_reply_executes_tool_and_then_returns_final_response(
                     arguments={
                         "title": "Buy milk",
                     },
+                    raw={},
                 )
             ],
         ),

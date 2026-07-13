@@ -18,7 +18,8 @@ class ChatMessage:
 class ToolCall:
     id: str
     name: str
-    arguments: dict
+    arguments: dict[str, typing.Any]
+    raw: dict[str, typing.Any]
 
 
 @dataclasses.dataclass(frozen=True)
