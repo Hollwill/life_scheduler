@@ -71,6 +71,7 @@ jobs:
 
 
             podman rm -f life-scheduler-telegram-bot
+            podman rm -f life-scheduler-apscheduler
 
             podman run -d \
               --name life-scheduler-telegram-bot \
@@ -78,3 +79,12 @@ jobs:
               --restart unless-stopped \
               --network=host \
               "$IMAGE:latest"
+
+            podman run -d \
+              --name life-scheduler-apscheduler \
+              --env-file /home/life-scheduler/.env \
+              --restart unless-stopped \
+              --network=host \
+              --entrypoint /app/.venv/bin/python \
+              "$IMAGE:latest" \
+              -m entrypoints.scheduler
