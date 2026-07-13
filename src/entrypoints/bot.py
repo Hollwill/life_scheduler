@@ -4,6 +4,7 @@ import sys
 
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 from dishka.integrations.aiogram import setup_dishka
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -27,8 +28,12 @@ async def main() -> None:
 
     await init_db(engine)  # TODO: Унести инициализацию БД в миграции через alembic
 
+    session = AiohttpSession()
+    session.trust_env = True
+
     bot = Bot(
         token=settings.telegram_bot_token,
+        session=session,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 
