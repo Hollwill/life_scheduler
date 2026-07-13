@@ -78,6 +78,7 @@ jobs:
               --env-file /home/life-scheduler/.env \
               --restart unless-stopped \
               --network=host \
+              -v /var/run/postgresql:/var/run/postgresql:Z \
               "$IMAGE:latest"
 
             podman run -d \
@@ -85,6 +86,7 @@ jobs:
               --env-file /home/life-scheduler/.env \
               --restart unless-stopped \
               --network=host \
+              -v /var/run/postgresql:/var/run/postgresql:Z \
               --entrypoint /app/.venv/bin/python \
               "$IMAGE:latest" \
               -m entrypoints.scheduler
