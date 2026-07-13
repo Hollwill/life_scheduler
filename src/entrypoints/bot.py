@@ -28,7 +28,10 @@ async def main() -> None:
 
     await init_db(engine)  # TODO: Унести инициализацию БД в миграции через alembic
 
-    session = AiohttpSession(proxy=settings.proxy_url)
+    if settings.proxy_url:
+        session = AiohttpSession(proxy=settings.proxy_url)
+    else:
+        session = AiohttpSession()
 
     bot = Bot(
         token=settings.telegram_bot_token,

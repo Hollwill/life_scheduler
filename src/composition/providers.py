@@ -3,6 +3,7 @@ from collections.abc import AsyncIterable
 
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dishka import AsyncContainer, Provider, Scope, provide
@@ -315,9 +316,14 @@ class InfrastructureProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def bot(self, settings: Settings) -> Bot:
         assert settings.telegram_bot_token
+        if settings.proxy_url:
+            session = AiohttpSession(proxy=settings.proxy_url)
+        else:
+            session = AiohttpSession()
 
         return Bot(
             token=settings.telegram_bot_token,
+            session=session,
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         )
 
