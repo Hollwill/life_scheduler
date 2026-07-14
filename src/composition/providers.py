@@ -41,7 +41,8 @@ from application.task_template.commands import (
 )
 from application.task_template.queries import GetTaskTemplatesHandler
 from application.task_template.tools import CreateTaskTemplateTool, GetTaskTemplatesTool
-from application.user.commands import GetOrCreateUserHandler
+from application.user.commands import GetOrCreateUserHandler, SetUserTimezoneHandler
+from application.user.tools import SetUserTimezoneTool
 from composition.utils import create_job
 from domain.task_instance.events import TaskReminderRequested
 from domain.task_instance.repository import TaskInstanceRepository
@@ -168,16 +169,27 @@ class ApplicationProvider(Provider):
         return GetTaskTemplatesTool(handler=get_task_templates_handler)
 
     @provide(scope=Scope.REQUEST)
+    def provide_set_user_timezone_tool(
+        self, set_user_timezone_handler: SetUserTimezoneHandler
+    ) -> SetUserTimezoneTool:
+        return SetUserTimezoneTool(handler=set_user_timezone_handler)
+
+    @provide(scope=Scope.REQUEST)
     def get_tool_dispatcher(
         self,
         create_task_template_tool: CreateTaskTemplateTool,
         get_task_templates_tool: GetTaskTemplatesTool,
+        set_user_timezone_tool: SetUserTimezoneTool,
     ) -> ToolDispatcher:
 
         return ToolDispatcher(
             tools={
-                create_task_template_tool.name: create_task_template_tool,
-                get_task_templates_tool.name: get_task_templates_tool,
+                tool.name: tool
+                for tool in [
+                    create_task_template_tool,
+                    get_task_templates_tool,
+                    set_user_timezone_tool,
+                ]
             }
         )
 
@@ -226,6 +238,12 @@ class ApplicationProvider(Provider):
         self, uow: UnitOfWork
     ) -> GenerateTasksForDayHandler:
         return GenerateTasksForDayHandler(
+            uow=uow,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def get_set_user_timezone_handler(self, uow: UnitOfWork) -> SetUserTimezoneHandler:
+        return SetUserTimezoneHandler(
             uow=uow,
         )
 
@@ -316,6 +334,7 @@ class InfrastructureProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def bot(self, settings: Settings) -> Bot:
         assert settings.telegram_bot_token
+
         if settings.proxy_url:
             session = AiohttpSession(proxy=settings.proxy_url)
         else:
@@ -349,9 +368,6 @@ class SchedulerProvider(Provider):
     def get_scheduler(
         self,
         container: AsyncContainer,
-        # generate_tasks_handler: GenerateTasksForDayHandler,
-        # miss_overdue_task_instances_handler: MissOverdueTaskInstancesHandler,
-        # dispatch_outbox_messages_handler: DispatchOutboxMessagesHandler,
     ) -> AsyncIOScheduler:
         scheduler = AsyncIOScheduler()
 

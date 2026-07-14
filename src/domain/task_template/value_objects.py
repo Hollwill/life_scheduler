@@ -46,3 +46,6 @@ class DayOfMonth(ValueObject):
     def __post_init__(self):
         if not 1 <= self.value <= 31:
             raise InvalidDayOfMonthException(context={"value": self.value})
+
+    def __composite_values__(self):
+        return (self.value,)
