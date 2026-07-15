@@ -7,12 +7,48 @@ from application.llm.context import ToolContext
 from application.task_template.commands import (
     CreateTaskTemplateCommand,
     CreateTaskTemplateHandler,
+    UpdateTaskTemplateCommand,
+    UpdateTaskTemplateHandler,
 )
 from application.task_template.queries import (
     GetTaskTemplatesHandler,
     GetTaskTemplatesQuery,
 )
 from application.task_template.schemas import TriggerPayload
+
+
+class UpdateTaskTemplateToolInput(pydantic.BaseModel):
+    task_template_public_id: str
+    title: str
+    description: str | None
+    trigger_payload: TriggerPayload
+
+
+class UpdateTaskTemplateTool(Tool):
+    input_model = UpdateTaskTemplateToolInput
+
+    name = "update_task_template"
+    description = "update a task template"
+
+    def __init__(
+        self,
+        handler: UpdateTaskTemplateHandler,
+    ):
+        self.handler = handler
+
+    async def call(
+        self, payload: UpdateTaskTemplateToolInput, context: ToolContext
+    ) -> dict[str, typing.Any]:
+
+        command = UpdateTaskTemplateCommand(
+            task_template_public_id=payload.task_template_public_id,
+            title=payload.title,
+            description=payload.description,
+            trigger_payload=payload.trigger_payload,
+            now=context.now,
+        )
+
+        return await self.handler.handle(command=command)
 
 
 class CreateTaskTemplateToolInput(pydantic.BaseModel):

@@ -62,14 +62,16 @@ class UpdateTaskTemplateCommand:
     now: datetime.datetime
 
 
-class UpdateTaskTemplateHandler(CommandHandler[UpdateTaskTemplateCommand, None]):
+class UpdateTaskTemplateHandler(
+    CommandHandler[UpdateTaskTemplateCommand, dict[str, str]]
+):
     def __init__(
         self,
         uow: UnitOfWork,
     ) -> None:
         self.uow: UnitOfWork = uow
 
-    async def handle(self, command: UpdateTaskTemplateCommand) -> None:
+    async def handle(self, command: UpdateTaskTemplateCommand) -> dict[str, str]:
         async with self.uow:
             task_template = await self.uow.task_templates.get_by_public_id(
                 command.task_template_public_id
@@ -87,6 +89,8 @@ class UpdateTaskTemplateHandler(CommandHandler[UpdateTaskTemplateCommand, None])
             )
 
             await self.uow.task_templates.save(task_template)
+
+        return {"status": "success", "task_template_public_id": task_template.public_id}
 
 
 @dataclasses.dataclass

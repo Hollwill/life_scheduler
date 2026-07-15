@@ -38,9 +38,14 @@ from application.task_template.commands import (
     DeactivateTaskTemplateHandler,
     GenerateTasksForDayCommand,
     GenerateTasksForDayHandler,
+    UpdateTaskTemplateHandler,
 )
 from application.task_template.queries import GetTaskTemplatesHandler
-from application.task_template.tools import CreateTaskTemplateTool, GetTaskTemplatesTool
+from application.task_template.tools import (
+    CreateTaskTemplateTool,
+    GetTaskTemplatesTool,
+    UpdateTaskTemplateTool,
+)
 from application.user.commands import GetOrCreateUserHandler, SetUserTimezoneHandler
 from application.user.tools import SetUserTimezoneTool
 from composition.utils import create_job
@@ -125,6 +130,13 @@ class ApplicationProvider(Provider):
         return CreateTaskTemplateHandler(uow=uow)
 
     @provide(scope=Scope.REQUEST)
+    def update_task_template_handler(
+        self,
+        uow: UnitOfWork,
+    ) -> UpdateTaskTemplateHandler:
+        return UpdateTaskTemplateHandler(uow=uow)
+
+    @provide(scope=Scope.REQUEST)
     def get_event_dispatcher(
         self, uow: UnitOfWork, telegram_notifier: TelegramNotifier
     ) -> EventDispatcher:
@@ -163,6 +175,12 @@ class ApplicationProvider(Provider):
         return CreateTaskTemplateTool(handler=create_task_template_handler)
 
     @provide(scope=Scope.REQUEST)
+    def get_update_task_template_tool(
+        self, update_task_template_handler: UpdateTaskTemplateHandler
+    ) -> UpdateTaskTemplateTool:
+        return UpdateTaskTemplateTool(handler=update_task_template_handler)
+
+    @provide(scope=Scope.REQUEST)
     def provide_get_task_templates_tool(
         self, get_task_templates_handler: GetTaskTemplatesHandler
     ) -> GetTaskTemplatesTool:
@@ -178,6 +196,7 @@ class ApplicationProvider(Provider):
     def get_tool_dispatcher(
         self,
         create_task_template_tool: CreateTaskTemplateTool,
+        update_task_template_tool: UpdateTaskTemplateTool,
         get_task_templates_tool: GetTaskTemplatesTool,
         set_user_timezone_tool: SetUserTimezoneTool,
     ) -> ToolDispatcher:
@@ -187,6 +206,7 @@ class ApplicationProvider(Provider):
                 tool.name: tool
                 for tool in [
                     create_task_template_tool,
+                    update_task_template_tool,
                     get_task_templates_tool,
                     set_user_timezone_tool,
                 ]

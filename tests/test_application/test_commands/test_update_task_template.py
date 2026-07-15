@@ -58,7 +58,7 @@ async def test_update_task_template_handler_updates_and_saves_template(
         now=datetime.datetime.now(),
     )
 
-    await handler.handle(command)
+    result = await handler.handle(command)
 
     updated_template = await memory_task_template_repository.get_by_id(task_template.id)
 
@@ -66,6 +66,11 @@ async def test_update_task_template_handler_updates_and_saves_template(
     assert updated_template.title == new_title
     assert updated_template.description == new_description
     assert updated_template.updated_at > task_template.created_at
+
+    assert result == {
+        "status": "success",
+        "task_template_public_id": task_template.public_id,
+    }
 
     assert isinstance(updated_template.trigger, WeeklyTrigger)
     assert (
