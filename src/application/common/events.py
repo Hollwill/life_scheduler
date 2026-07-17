@@ -1,13 +1,14 @@
 import abc
+import dataclasses
 
 from application.common.repositories import OutboxRepository
 from application.common.unit_of_work import UnitOfWork
-from domain.common.event import DomainEvent
-from domain.task_instance.events import TaskReminderRequested
+from domain.common.event import Event
 
-EVENT_REGISTRY: dict[str, type[DomainEvent]] = {
-    TaskReminderRequested.event_type: TaskReminderRequested,
-}
+
+@dataclasses.dataclass(frozen=True)
+class ApplicationEvent(Event, abc.ABC):
+    pass
 
 
 class EventHandler[TEvent](abc.ABC):
@@ -22,13 +23,13 @@ class EventHandler[TEvent](abc.ABC):
 class EventDispatcher:
     def __init__(
         self,
-        handlers: dict[type[DomainEvent], list[EventHandler]],
+        handlers: dict[type[Event], list[EventHandler]],
     ):
         self._handlers = handlers
 
     async def dispatch(
         self,
-        event: DomainEvent,
+        event: Event,
     ) -> None:
         for handler in self._handlers.get(type(event), []):
             await handler.handle(event)
@@ -40,10 +41,12 @@ class DispatchOutboxMessagesHandler:
         outbox_repository: OutboxRepository,
         uow: UnitOfWork,
         dispatcher: EventDispatcher,
+        event_registry: dict[str, type[Event]],
     ):
         self.outbox_repository = outbox_repository
         self.uow = uow
         self.dispatcher = dispatcher
+        self.event_registry = event_registry
 
     async def handle(
         self,
@@ -52,7 +55,7 @@ class DispatchOutboxMessagesHandler:
 
         for message in outbox_messages:
             async with self.uow:
-                event_cls = EVENT_REGISTRY[message.event_type]
+                event_cls = self.event_registry[message.event_type]
                 event = event_cls(**message.payload)
 
                 await self.dispatcher.dispatch(event)

@@ -3,6 +3,7 @@ import datetime
 
 from application.common.base import CommandHandler
 from application.common.unit_of_work import UnitOfWork
+from application.task_instance.events import ReminderNotificationRequested
 from application.task_instance.exceptions import TaskInstanceNotFoundException
 
 
@@ -47,6 +48,9 @@ class GenerateTaskRemindersHandler(CommandHandler[GenerateTaskRemindersCommand, 
                 # produces reminder event
                 task_instance.mark_reminded(now=command.now)
                 await self.uow.task_instances.save(task_instance)
+                await self.uow.outbox.save_from_event(
+                    ReminderNotificationRequested(str(task_instance.id))
+                )
 
 
 @dataclasses.dataclass

@@ -4,19 +4,19 @@ import uuid
 from application.common.events import EventHandler
 from application.common.notifiers import TelegramNotifier
 from application.common.unit_of_work import UnitOfWork
-from domain.task_instance.events import TaskReminderRequested
+from application.task_instance.events import ReminderNotificationRequested
 
 logger = logging.getLogger(__name__)
 
 
-class SendTelegramReminderHandler(EventHandler[TaskReminderRequested]):
+class SendTelegramReminderHandler(EventHandler[ReminderNotificationRequested]):
     def __init__(self, uow: UnitOfWork, telegram_notifier: TelegramNotifier):
         super().__init__(uow)
         self.telegram_notifier = telegram_notifier
 
     async def handle(
         self,
-        event: TaskReminderRequested,
+        event: ReminderNotificationRequested,
     ) -> None:
 
         task_instance = await self.uow.task_instances.get_by_id(

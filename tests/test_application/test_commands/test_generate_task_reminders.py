@@ -6,8 +6,8 @@ from application.task_instance.commands import (
     GenerateTaskRemindersCommand,
     GenerateTaskRemindersHandler,
 )
+from application.task_instance.events import ReminderNotificationRequested
 from domain.task_instance.aggregate import TaskInstance, TaskStatus
-from domain.task_instance.events import TaskReminderRequested
 from infrastructure.memory.repositories import MemoryTaskInstanceRepository
 from infrastructure.memory.unit_of_work import MemoryUnitOfWork
 from tests.factories.task_instance import TaskInstanceFactory
@@ -94,7 +94,10 @@ async def test_generate_task_reminders_handler_cases(
 
     if should_remind:
         assert updated.reminded_at == now
-        assert any(isinstance(e, TaskReminderRequested) for e in updated.flush_events())
+        outbox_records = await memory_uow.outbox.get_unprocessed()
+        assert len(outbox_records) == 1
+        outbox_record = next(iter(outbox_records))
+        assert outbox_record.event_type == ReminderNotificationRequested.event_type
     else:
         assert updated.reminded_at == reminded_at_before
         assert updated.flush_events() == []

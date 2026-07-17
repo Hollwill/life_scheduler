@@ -2,7 +2,7 @@ import datetime
 import uuid
 from dataclasses import dataclass
 
-from domain.common.event import DomainEvent
+from domain.common.event import Event
 
 
 @dataclass
@@ -13,7 +13,7 @@ class OutboxModel:
     processed_at: datetime.datetime | None
 
     @classmethod
-    def from_event(cls, event: DomainEvent) -> OutboxModel:
+    def from_event(cls, event: Event) -> OutboxModel:
         return OutboxModel(
             id=uuid.uuid4(),
             event_type=event.event_type,

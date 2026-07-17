@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from application.common.unit_of_work import UnitOfWork
 from domain.common import AggregateRoot
-from domain.common.event import DomainEvent
+from domain.common.event import Event
 from infrastructure.database.outbox import OutboxModel
 from infrastructure.database.repositories.outbox import SqlAlchemyOutboxRepository
 from infrastructure.database.repositories.task_instance import (
@@ -57,7 +57,7 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
             await self.session.close()
             self.session = None
 
-    def _collect_events(self) -> list[DomainEvent]:
+    def _collect_events(self) -> list[Event]:
         assert self.session is not None
 
         events = []

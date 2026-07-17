@@ -4,7 +4,6 @@ import typing
 import pytest
 
 from domain.task_instance.aggregate import TaskInstance, TaskStatus
-from domain.task_instance.events import TaskReminderRequested
 from domain.task_instance.exceptions import (
     TaskInstanceInvalidPostponeDateException,
     TaskInstanceInvalidReminderDateException,
@@ -303,12 +302,7 @@ def test_task_instance_mark_reminded(
     assert task_instance.reminded_at == now
 
     events = task_instance.flush_events()
-    assert len(events) == 1
-
-    event = events[0]
-
-    assert isinstance(event, TaskReminderRequested)
-    assert event.task_instance_id == str(task_instance.id)
+    assert len(events) == 0
 
 
 def test_task_instance_mark_reminded_skips_if_scheduled_at_is_none(

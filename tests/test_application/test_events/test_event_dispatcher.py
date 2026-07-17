@@ -4,7 +4,7 @@ from application.common.events import (
     EventHandler,
 )
 from application.common.unit_of_work import UnitOfWork
-from domain.task_instance.events import TaskReminderRequested
+from application.task_instance.events import ReminderNotificationRequested
 from infrastructure.database.outbox import OutboxModel
 from infrastructure.memory.repositories.memory_outbox_repository import (
     MemoryOutboxRepository,
@@ -12,12 +12,12 @@ from infrastructure.memory.repositories.memory_outbox_repository import (
 from infrastructure.memory.unit_of_work import MemoryUnitOfWork
 
 
-class FakeHandler(EventHandler[TaskReminderRequested]):
+class FakeHandler(EventHandler[ReminderNotificationRequested]):
     def __init__(self, uow: UnitOfWork):
         super().__init__(uow)
-        self.events: list[TaskReminderRequested] = []
+        self.events: list[ReminderNotificationRequested] = []
 
-    async def handle(self, event: TaskReminderRequested) -> None:
+    async def handle(self, event: ReminderNotificationRequested) -> None:
         self.events.append(event)
 
 
@@ -30,7 +30,7 @@ class FakeDispatcher:
 
 
 async def test_event_dispatcher_calls_all_handlers(memory_uow: MemoryUnitOfWork):
-    event = TaskReminderRequested(
+    event = ReminderNotificationRequested(
         task_instance_id="123",
     )
 
@@ -39,7 +39,7 @@ async def test_event_dispatcher_calls_all_handlers(memory_uow: MemoryUnitOfWork)
 
     dispatcher = EventDispatcher(
         handlers={
-            TaskReminderRequested: [
+            ReminderNotificationRequested: [
                 handler1,
                 handler2,
             ]
@@ -53,7 +53,7 @@ async def test_event_dispatcher_calls_all_handlers(memory_uow: MemoryUnitOfWork)
 
 
 async def test_event_dispatcher_ignores_unknown_event():
-    event = TaskReminderRequested(
+    event = ReminderNotificationRequested(
         task_instance_id="123",
     )
 
@@ -66,7 +66,7 @@ async def test_dispatch_outbox_messages(
     memory_outbox_repository: MemoryOutboxRepository,
     memory_uow: MemoryUnitOfWork,
 ):
-    event = TaskReminderRequested(
+    event = ReminderNotificationRequested(
         task_instance_id="123",
     )
 
@@ -80,6 +80,9 @@ async def test_dispatch_outbox_messages(
         outbox_repository=memory_outbox_repository,
         uow=memory_uow,
         dispatcher=dispatcher,
+        event_registry={
+            ReminderNotificationRequested.event_type: ReminderNotificationRequested
+        },
     )
 
     await handler.handle()
@@ -95,7 +98,7 @@ async def test_dispatch_outbox_messages_skips_processed(
     memory_outbox_repository: MemoryOutboxRepository,
     memory_uow: MemoryUnitOfWork,
 ):
-    event = TaskReminderRequested(
+    event = ReminderNotificationRequested(
         task_instance_id="123",
     )
 
@@ -110,6 +113,9 @@ async def test_dispatch_outbox_messages_skips_processed(
         outbox_repository=memory_outbox_repository,
         uow=memory_uow,
         dispatcher=dispatcher,
+        event_registry={
+            ReminderNotificationRequested.event_type: ReminderNotificationRequested
+        },
     )
 
     await handler.handle()
@@ -121,7 +127,7 @@ async def test_dispatch_outbox_restores_domain_event(
     memory_outbox_repository: MemoryOutboxRepository,
     memory_uow: MemoryUnitOfWork,
 ):
-    event = TaskReminderRequested(
+    event = ReminderNotificationRequested(
         task_instance_id="123",
     )
 
@@ -135,6 +141,9 @@ async def test_dispatch_outbox_restores_domain_event(
         outbox_repository=memory_outbox_repository,
         uow=memory_uow,
         dispatcher=dispatcher,
+        event_registry={
+            ReminderNotificationRequested.event_type: ReminderNotificationRequested
+        },
     )
 
     await handler.handle()
@@ -143,6 +152,6 @@ async def test_dispatch_outbox_restores_domain_event(
 
     assert isinstance(
         restored_event,
-        TaskReminderRequested,
+        ReminderNotificationRequested,
     )
     assert restored_event.task_instance_id == "123"

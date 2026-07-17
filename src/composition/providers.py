@@ -32,6 +32,7 @@ from application.task_instance.commands import (
     MissOverdueTaskInstancesHandler,
 )
 from application.task_instance.event_handlers import SendTelegramReminderHandler
+from application.task_instance.events import ReminderNotificationRequested
 from application.task_instance.queries import GetTaskInstancesHandler
 from application.task_template.commands import (
     CreateTaskTemplateHandler,
@@ -49,7 +50,6 @@ from application.task_template.tools import (
 from application.user.commands import GetOrCreateUserHandler, SetUserTimezoneHandler
 from application.user.tools import SetUserTimezoneTool
 from composition.utils import create_job
-from domain.task_instance.events import TaskReminderRequested
 from domain.task_instance.repository import TaskInstanceRepository
 from domain.task_template.repository import TaskTemplateRepository
 from domain.user.repository import (
@@ -142,7 +142,7 @@ class ApplicationProvider(Provider):
     ) -> EventDispatcher:
         return EventDispatcher(
             handlers={
-                TaskReminderRequested: [
+                ReminderNotificationRequested: [
                     SendTelegramReminderHandler(
                         uow=uow, telegram_notifier=telegram_notifier
                     ),
@@ -158,7 +158,12 @@ class ApplicationProvider(Provider):
         dispatcher: EventDispatcher,
     ) -> DispatchOutboxMessagesHandler:
         return DispatchOutboxMessagesHandler(
-            outbox_repository=outbox_repository, uow=uow, dispatcher=dispatcher
+            outbox_repository=outbox_repository,
+            uow=uow,
+            dispatcher=dispatcher,
+            event_registry={
+                ReminderNotificationRequested.event_type: ReminderNotificationRequested
+            },
         )
 
     @provide(scope=Scope.REQUEST)

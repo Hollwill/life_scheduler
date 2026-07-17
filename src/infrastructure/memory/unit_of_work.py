@@ -1,7 +1,7 @@
 import typing
 
 from application.common.unit_of_work import UnitOfWork
-from domain.common.event import DomainEvent
+from domain.common.event import Event
 from infrastructure.memory.database import MemoryDatabase
 from infrastructure.memory.repositories import (
     MemoryTaskInstanceRepository,
@@ -38,5 +38,5 @@ class MemoryUnitOfWork(UnitOfWork):
         if exc_type:
             await self.rollback()
 
-    def _collect_events(self) -> typing.Collection[DomainEvent]:
+    def _collect_events(self) -> typing.Collection[Event]:
         return self.memory_db.collect_events()

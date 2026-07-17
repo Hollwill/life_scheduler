@@ -3,8 +3,8 @@ import uuid
 import pytest
 
 from application.task_instance.event_handlers import SendTelegramReminderHandler
+from application.task_instance.events import ReminderNotificationRequested
 from domain.task_instance.aggregate import TaskInstance
-from domain.task_instance.events import TaskReminderRequested
 from domain.user.aggregate import User
 from infrastructure.memory.repositories import (
     MemoryTaskInstanceRepository,
@@ -44,7 +44,7 @@ async def test_telegram_reminder_handler(
         uow=memory_uow, telegram_notifier=telegram_notifier
     )
 
-    event = TaskReminderRequested(task_instance_id=str(task_instance.id))
+    event = ReminderNotificationRequested(task_instance_id=str(task_instance.id))
 
     async with memory_uow:
         await handler.handle(event)

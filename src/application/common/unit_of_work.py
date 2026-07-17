@@ -1,7 +1,7 @@
 import abc
 
 from application.common.repositories import OutboxRepository
-from domain.common.event import DomainEvent
+from domain.common.event import Event
 from domain.task_instance.repository import TaskInstanceRepository
 from domain.task_template.repository import TaskTemplateRepository
 from domain.user.repository import UserRepository
@@ -54,5 +54,5 @@ class UnitOfWork(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _collect_events(self) -> list[DomainEvent]:
+    def _collect_events(self) -> list[Event]:
         raise NotImplementedError

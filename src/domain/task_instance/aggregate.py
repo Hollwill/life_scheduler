@@ -4,7 +4,6 @@ from enum import Enum
 
 from domain.common import AggregateRoot
 from domain.common.utils import generate_public_id
-from domain.task_instance.events import TaskReminderRequested
 from domain.task_instance.exceptions import (
     TaskInstanceInvalidPostponeDateException,
     TaskInstanceInvalidReminderDateException,
@@ -143,9 +142,3 @@ class TaskInstance(AggregateRoot[uuid.UUID]):
             )
 
         self.reminded_at = now
-
-        self.add_event(
-            TaskReminderRequested(
-                task_instance_id=str(self.id),
-            )
-        )
