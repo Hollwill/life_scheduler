@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from testcontainers.postgres import PostgresContainer
 
-from infrastructure.database.init_db import init_db
+from infrastructure.database.orm import mapper_registry
 from infrastructure.database.repositories.task_instance import (
     SqlAlchemyTaskInstanceRepository,
 )
@@ -53,7 +53,8 @@ async def engine(
     engine = create_async_engine(
         postgres_container.get_connection_url(driver="asyncpg"),
     )
-    await init_db(engine)
+    async with engine.begin() as conn:
+        await conn.run_sync(mapper_registry.metadata.create_all)
 
     yield engine
 

@@ -24,7 +24,7 @@ class TaskInstance(AggregateRoot[uuid.UUID]):
         self,
         id: uuid.UUID,
         public_id: str,
-        task_template_id: uuid.UUID,
+        task_template_id: uuid.UUID | None,
         user_id: uuid.UUID,
         title: str,
         description: str | None,
@@ -51,7 +51,7 @@ class TaskInstance(AggregateRoot[uuid.UUID]):
     @classmethod
     def create(
         cls,
-        task_template_id: uuid.UUID,
+        task_template_id: uuid.UUID | None,
         user_id: uuid.UUID,
         title: str,
         description: str | None,

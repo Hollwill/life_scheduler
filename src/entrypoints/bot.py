@@ -7,10 +7,8 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 from dishka.integrations.aiogram import setup_dishka
-from sqlalchemy.ext.asyncio import AsyncEngine
 
 from composition.container import container
-from infrastructure.database.init_db import init_db
 from infrastructure.logging import setup_logging
 from presentation.telegram.bot import dp
 from settings import Settings
@@ -23,10 +21,6 @@ async def main() -> None:
 
     if not settings.telegram_bot_token:
         raise ValueError("Telegram bot token is not set")
-
-    engine = await container.get(AsyncEngine)
-
-    await init_db(engine)  # TODO: Унести инициализацию БД в миграции через alembic
 
     if settings.proxy_url:
         session = AiohttpSession(proxy=settings.proxy_url)

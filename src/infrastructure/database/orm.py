@@ -17,14 +17,13 @@ from sqlalchemy.orm import registry
 from domain.task_instance.aggregate import TaskInstance, TaskStatus
 from domain.task_template.aggregate import TaskTemplate
 from domain.user.aggregate import User
+from infrastructure.database.metadata import metadata
 from infrastructure.database.outbox import OutboxModel
 from infrastructure.database.types import TimeZoneType, TriggerType
 
-mapper_registry = registry()
-
 task_template_table = Table(
     "task_template",
-    mapper_registry.metadata,
+    metadata,
     Column("id", UUID(as_uuid=True), primary_key=True),
     Column("public_id", String(8), nullable=False, unique=True),
     Column("user_id", UUID(as_uuid=True), nullable=False, index=True),
@@ -38,10 +37,10 @@ task_template_table = Table(
 
 task_instance_table = Table(
     "task_instance",
-    mapper_registry.metadata,
+    metadata,
     Column("id", UUID(as_uuid=True), primary_key=True),
     Column("public_id", String(8), nullable=False, unique=True),
-    Column("task_template_id", UUID(as_uuid=True), nullable=False, index=True),
+    Column("task_template_id", UUID(as_uuid=True), nullable=True, index=True),
     Column("user_id", UUID(as_uuid=True), nullable=False, index=True),
     Column("title", String(255), nullable=False),
     Column("description", String, nullable=True),
@@ -60,7 +59,7 @@ task_instance_table = Table(
 
 user_table = Table(
     "user",
-    mapper_registry.metadata,
+    metadata,
     Column("id", UUID(as_uuid=True), primary_key=True),
     Column("telegram_user_id", Integer, nullable=False, unique=True),
     Column("timezone", TimeZoneType, nullable=False),
@@ -69,7 +68,7 @@ user_table = Table(
 
 outbox_table = Table(
     "outbox",
-    mapper_registry.metadata,
+    metadata,
     Column("id", UUID(as_uuid=True), primary_key=True),
     Column("event_type", String(255), nullable=False),
     Column("payload", JSONB, nullable=False),
@@ -78,6 +77,8 @@ outbox_table = Table(
     ),
     Column("processed_at", DateTime(timezone=True), nullable=True),
 )
+
+mapper_registry = registry(metadata=metadata)
 
 
 mapper_registry.map_imperatively(

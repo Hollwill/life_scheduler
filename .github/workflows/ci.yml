@@ -72,6 +72,7 @@ jobs:
 
             podman rm -f life-scheduler-telegram-bot
             podman rm -f life-scheduler-apscheduler
+            podman rm -f life-scheduler-alembic
 
             podman run -d \
               --name life-scheduler-telegram-bot \
@@ -88,3 +89,11 @@ jobs:
               --entrypoint /app/.venv/bin/python \
               "$IMAGE:latest" \
               -m entrypoints.scheduler
+
+            podman run \
+              --name life-scheduler-alembic \
+              --env-file /home/life-scheduler/.env \
+              --network=host \
+              --entrypoint /app/.venv/bin/alembic \
+              "$IMAGE:latest" \
+              upgrade head
