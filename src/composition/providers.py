@@ -440,7 +440,7 @@ class SchedulerProvider(Provider):
                 lambda: GenerateDailyAgendaCommand(day=datetime.date.today()),
             ),
             "cron",
-            hour=9,
+            hour=2,
             minute=0,
             name="generate_daily_agenda",
         )
