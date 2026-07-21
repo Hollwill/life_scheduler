@@ -1,3 +1,4 @@
+import typing
 import uuid
 
 from sqlalchemy import select
@@ -23,6 +24,10 @@ class SqlAlchemyUserRepository(UserRepository):
             select(User).where(user_table.c.telegram_user_id == telegram_user_id)
         )
         return result.scalars().first()
+
+    async def get_all(self) -> typing.Sequence[User]:
+        result = await self.session.execute(select(User))
+        return result.scalars().all()
 
     async def save(self, user: User) -> None:
         instance = await self.session.get(User, user.id)

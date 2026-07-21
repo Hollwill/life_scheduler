@@ -1,3 +1,4 @@
+import typing
 import uuid
 
 import pytest
@@ -22,6 +23,24 @@ async def test_memory_user_repository_save_and_get(
     assert retrieved.telegram_user_id == user.telegram_user_id
     assert retrieved.name == user.name
     assert retrieved is not user  # Deepcopy check
+
+
+@pytest.mark.parametrize(
+    "users",
+    ((UserFactory.build(), UserFactory.build()),),
+)
+async def test_memory_user_repository_get_all(
+    memory_user_repository: MemoryUserRepository, users: typing.Iterable[User]
+):
+
+    for user in users:
+        await memory_user_repository.save(user)
+    retrieved = await memory_user_repository.get_all()
+
+    assert retrieved is not None
+    assert len(retrieved) == 2
+
+    assert {user.id for user in retrieved} == {user.id for user in users}
 
 
 async def test_memory_user_repository_get_none(

@@ -26,13 +26,21 @@ from application.llm.prompt_builder import PromptBuilder
 from application.llm.repositories import ConversationHistoryRepository
 from application.task_instance.commands import (
     CompleteTaskInstanceHandler,
+    GenerateDailyAgendaCommand,
+    GenerateDailyAgendaHandler,
     GenerateTaskRemindersCommand,
     GenerateTaskRemindersHandler,
     MissOverdueTaskInstancesCommand,
     MissOverdueTaskInstancesHandler,
 )
-from application.task_instance.event_handlers import SendTelegramReminderHandler
-from application.task_instance.events import ReminderNotificationRequested
+from application.task_instance.event_handlers import (
+    SendTelegramDailyAgendaHandler,
+    SendTelegramReminderHandler,
+)
+from application.task_instance.events import (
+    DailyAgendaRequested,
+    ReminderNotificationRequested,
+)
 from application.task_instance.queries import GetTaskInstancesHandler
 from application.task_template.commands import (
     CreateTaskTemplateHandler,
@@ -146,7 +154,12 @@ class ApplicationProvider(Provider):
                     SendTelegramReminderHandler(
                         uow=uow, telegram_notifier=telegram_notifier
                     ),
-                ]
+                ],
+                DailyAgendaRequested: [
+                    SendTelegramDailyAgendaHandler(
+                        uow=uow, telegram_notifier=telegram_notifier
+                    )
+                ],
             }
         )
 
@@ -162,7 +175,11 @@ class ApplicationProvider(Provider):
             uow=uow,
             dispatcher=dispatcher,
             event_registry={
-                ReminderNotificationRequested.event_type: ReminderNotificationRequested
+                event_cls.event_type: event_cls
+                for event_cls in [
+                    ReminderNotificationRequested,
+                    DailyAgendaRequested,
+                ]
             },
         )
 
@@ -407,6 +424,17 @@ class SchedulerProvider(Provider):
             "interval",
             minutes=1,
             name="generate_task_reminders",
+        )
+
+        scheduler.add_job(
+            create_job(
+                container,
+                GenerateDailyAgendaHandler,
+                lambda: GenerateDailyAgendaCommand(day=datetime.date.today()),
+            ),
+            "interval",
+            minutes=5,
+            name="generate_daily_agenda",
         )
 
         scheduler.add_job(

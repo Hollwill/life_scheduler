@@ -1,4 +1,5 @@
 import abc
+import typing
 import uuid
 
 from domain.user.aggregate import User
@@ -11,6 +12,10 @@ class UserRepository(abc.ABC):
 
     @abc.abstractmethod
     async def get_by_telegram_user_id(self, telegram_user_id: int) -> User | None:
+        pass
+
+    @abc.abstractmethod
+    async def get_all(self) -> typing.Sequence[User]:
         pass
 
     @abc.abstractmethod

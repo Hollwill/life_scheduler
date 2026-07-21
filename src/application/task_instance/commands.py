@@ -3,7 +3,10 @@ import datetime
 
 from application.common.base import CommandHandler
 from application.common.unit_of_work import UnitOfWork
-from application.task_instance.events import ReminderNotificationRequested
+from application.task_instance.events import (
+    DailyAgendaRequested,
+    ReminderNotificationRequested,
+)
 from application.task_instance.exceptions import TaskInstanceNotFoundException
 
 
@@ -73,3 +76,23 @@ class MissOverdueTaskInstancesHandler(
             for task in overdue_tasks:
                 task.miss()
                 await self.uow.task_instances.save(task)
+
+
+@dataclasses.dataclass
+class GenerateDailyAgendaCommand:
+    day: datetime.date
+
+
+class GenerateDailyAgendaHandler(CommandHandler[GenerateDailyAgendaCommand, None]):
+    def __init__(self, uow: UnitOfWork) -> None:
+        self.uow = uow
+
+    async def handle(self, command: GenerateDailyAgendaCommand) -> None:
+        async with self.uow:
+            users = await self.uow.users.get_all()
+            for user in users:
+                await self.uow.outbox.save_from_event(
+                    DailyAgendaRequested(
+                        user_id=str(user.id), day=command.day.isoformat()
+                    )
+                )

@@ -1,4 +1,5 @@
 import copy
+import typing
 import uuid
 
 from domain.user.aggregate import User
@@ -21,6 +22,10 @@ class MemoryUserRepository(UserRepository):
             if user.telegram_user_id == telegram_user_id:
                 return copy.deepcopy(user)
         return None
+
+    async def get_all(self) -> typing.Sequence[User]:
+        users = list(self.db.users.values())
+        return copy.deepcopy(users)
 
     async def save(self, user: User) -> None:
         self.db.users[user.id] = copy.deepcopy(user)
