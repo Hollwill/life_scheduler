@@ -52,6 +52,7 @@ from application.task_template.commands import (
 from application.task_template.queries import GetTaskTemplatesHandler
 from application.task_template.tools import (
     CreateTaskTemplateTool,
+    DeactivateTaskTemplateTool,
     GetTaskTemplatesTool,
     UpdateTaskTemplateTool,
 )
@@ -209,6 +210,12 @@ class ApplicationProvider(Provider):
         return GetTaskTemplatesTool(handler=get_task_templates_handler)
 
     @provide(scope=Scope.REQUEST)
+    def provide_deactivate_task_template_tool(
+        self, deactivate_task_template_handler: DeactivateTaskTemplateHandler
+    ) -> DeactivateTaskTemplateTool:
+        return DeactivateTaskTemplateTool(handler=deactivate_task_template_handler)
+
+    @provide(scope=Scope.REQUEST)
     def provide_set_user_timezone_tool(
         self, set_user_timezone_handler: SetUserTimezoneHandler
     ) -> SetUserTimezoneTool:
@@ -219,6 +226,7 @@ class ApplicationProvider(Provider):
         self,
         create_task_template_tool: CreateTaskTemplateTool,
         update_task_template_tool: UpdateTaskTemplateTool,
+        deactivate_task_template_tool: DeactivateTaskTemplateTool,
         get_task_templates_tool: GetTaskTemplatesTool,
         set_user_timezone_tool: SetUserTimezoneTool,
     ) -> ToolDispatcher:
@@ -229,6 +237,7 @@ class ApplicationProvider(Provider):
                 for tool in [
                     create_task_template_tool,
                     update_task_template_tool,
+                    deactivate_task_template_tool,
                     get_task_templates_tool,
                     set_user_timezone_tool,
                 ]

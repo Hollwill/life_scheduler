@@ -7,6 +7,8 @@ from application.llm.context import ToolContext
 from application.task_template.commands import (
     CreateTaskTemplateCommand,
     CreateTaskTemplateHandler,
+    DeactivateTaskTemplateCommand,
+    DeactivateTaskTemplateHandler,
     UpdateTaskTemplateCommand,
     UpdateTaskTemplateHandler,
 )
@@ -112,3 +114,39 @@ class GetTaskTemplatesTool(Tool):
             task_template.model_dump()
             for task_template in await self.handler.handle(query=query)
         ]
+
+
+class DeactivateTaskTemplateToolInput(pydantic.BaseModel):
+    task_template_public_id: str
+
+
+class DeactivateTaskTemplateTool(Tool):
+    input_model = DeactivateTaskTemplateToolInput
+
+    name = "deactivate_task_template"
+    description = (
+        "Deactivate an existing task template. "
+        "Use this when the user asks to delete, remove, disable, "
+        "or stop a recurring task."
+    )
+
+    def __init__(
+        self,
+        handler: DeactivateTaskTemplateHandler,
+    ):
+        self.handler = handler
+
+    async def call(
+        self, payload: DeactivateTaskTemplateToolInput, context: ToolContext
+    ) -> dict[str, typing.Any]:
+
+        command = DeactivateTaskTemplateCommand(
+            task_template_public_id=payload.task_template_public_id,
+            now=context.now,
+        )
+
+        await self.handler.handle(command=command)
+        return {
+            "status": "success",
+            "task_template_public_id": payload.task_template_public_id,
+        }
