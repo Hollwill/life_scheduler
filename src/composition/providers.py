@@ -439,8 +439,9 @@ class SchedulerProvider(Provider):
                 GenerateDailyAgendaHandler,
                 lambda: GenerateDailyAgendaCommand(day=datetime.date.today()),
             ),
-            "interval",
-            minutes=5,
+            "cron",
+            hour=9,
+            minute=0,
             name="generate_daily_agenda",
         )
 
