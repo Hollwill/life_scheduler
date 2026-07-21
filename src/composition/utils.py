@@ -18,4 +18,6 @@ def create_job(
 
             await handler.handle(*handler_args)
 
+    wrapper.handler_type = handler_type  # type: ignore[attr-defined]
+
     return wrapper

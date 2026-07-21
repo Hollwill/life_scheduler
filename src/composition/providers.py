@@ -276,6 +276,13 @@ class ApplicationProvider(Provider):
         return GenerateTaskRemindersHandler(uow=uow)
 
     @provide(scope=Scope.REQUEST)
+    def get_generate_daily_agenda_handler(
+        self,
+        uow: UnitOfWork,
+    ) -> GenerateDailyAgendaHandler:
+        return GenerateDailyAgendaHandler(uow=uow)
+
+    @provide(scope=Scope.REQUEST)
     def get_generate_tasks_for_day_handler(
         self, uow: UnitOfWork
     ) -> GenerateTasksForDayHandler:
