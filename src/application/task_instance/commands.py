@@ -1,5 +1,6 @@
 import dataclasses
 import datetime
+import uuid
 
 from application.common.base import CommandHandler
 from application.common.unit_of_work import UnitOfWork
@@ -8,6 +9,35 @@ from application.task_instance.events import (
     ReminderNotificationRequested,
 )
 from application.task_instance.exceptions import TaskInstanceNotFoundException
+from domain.task_instance.aggregate import TaskInstance
+
+
+@dataclasses.dataclass
+class CreateTaskInstanceCommand:
+    user_id: uuid.UUID
+    title: str
+    description: str | None
+    occurrence_date: datetime.date
+    scheduled_at: datetime.datetime | None
+    now: datetime.datetime
+
+
+class CreateTaskInstanceHandler(CommandHandler[CreateTaskInstanceCommand, None]):
+    def __init__(self, uow: UnitOfWork) -> None:
+        self.uow = uow
+
+    async def handle(self, command: CreateTaskInstanceCommand) -> None:
+        async with self.uow:
+            task_instance = TaskInstance.create(
+                task_template_id=None,
+                user_id=command.user_id,
+                title=command.title,
+                description=command.description,
+                occurrence_date=command.occurrence_date,
+                scheduled_at=command.scheduled_at,
+                now=command.now,
+            )
+            await self.uow.task_instances.save(task_instance)
 
 
 @dataclasses.dataclass

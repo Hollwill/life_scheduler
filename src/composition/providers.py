@@ -26,6 +26,7 @@ from application.llm.prompt_builder import PromptBuilder
 from application.llm.repositories import ConversationHistoryRepository
 from application.task_instance.commands import (
     CompleteTaskInstanceHandler,
+    CreateTaskInstanceHandler,
     GenerateDailyAgendaCommand,
     GenerateDailyAgendaHandler,
     GenerateTaskRemindersCommand,
@@ -42,6 +43,7 @@ from application.task_instance.events import (
     ReminderNotificationRequested,
 )
 from application.task_instance.queries import GetTaskInstancesHandler
+from application.task_instance.tools import CreateTaskInstanceTool
 from application.task_template.commands import (
     CreateTaskTemplateHandler,
     DeactivateTaskTemplateHandler,
@@ -103,6 +105,13 @@ class ApplicationProvider(Provider):
         return GetTaskTemplatesHandler(
             task_template_repository=task_template_repository
         )
+
+    @provide(scope=Scope.REQUEST)
+    def create_task_instance_handler(
+        self,
+        uow: UnitOfWork,
+    ) -> CreateTaskInstanceHandler:
+        return CreateTaskInstanceHandler(uow=uow)
 
     @provide(scope=Scope.REQUEST)
     def get_task_instances_handler(
@@ -198,6 +207,12 @@ class ApplicationProvider(Provider):
         return CreateTaskTemplateTool(handler=create_task_template_handler)
 
     @provide(scope=Scope.REQUEST)
+    def get_create_task_instance_tool(
+        self, create_task_instance_handler: CreateTaskInstanceHandler
+    ) -> CreateTaskInstanceHandler:
+        return CreateTaskInstanceHandler(handler=create_task_instance_handler)
+
+    @provide(scope=Scope.REQUEST)
     def get_update_task_template_tool(
         self, update_task_template_handler: UpdateTaskTemplateHandler
     ) -> UpdateTaskTemplateTool:
@@ -225,6 +240,7 @@ class ApplicationProvider(Provider):
     def get_tool_dispatcher(
         self,
         create_task_template_tool: CreateTaskTemplateTool,
+        create_task_instance_tool: CreateTaskInstanceTool,
         update_task_template_tool: UpdateTaskTemplateTool,
         deactivate_task_template_tool: DeactivateTaskTemplateTool,
         get_task_templates_tool: GetTaskTemplatesTool,
@@ -236,6 +252,7 @@ class ApplicationProvider(Provider):
                 tool.name: tool
                 for tool in [
                     create_task_template_tool,
+                    create_task_instance_tool,
                     update_task_template_tool,
                     deactivate_task_template_tool,
                     get_task_templates_tool,
