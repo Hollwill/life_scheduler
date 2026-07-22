@@ -209,8 +209,8 @@ class ApplicationProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_create_task_instance_tool(
         self, create_task_instance_handler: CreateTaskInstanceHandler
-    ) -> CreateTaskInstanceHandler:
-        return CreateTaskInstanceHandler(handler=create_task_instance_handler)
+    ) -> CreateTaskInstanceTool:
+        return CreateTaskInstanceTool(handler=create_task_instance_handler)
 
     @provide(scope=Scope.REQUEST)
     def get_update_task_template_tool(
