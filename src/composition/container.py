@@ -1,7 +1,10 @@
 from dishka import make_async_container
 
 from composition.providers import (
-    ApplicationProvider,
+    ApplicationAssistantProvider,
+    ApplicationHandlersProvider,
+    ApplicationOutboxProvider,
+    ApplicationToolsProvider,
     DatabaseProvider,
     InfrastructureProvider,
     SchedulerProvider,
@@ -9,9 +12,12 @@ from composition.providers import (
 )
 
 container = make_async_container(
-    SettingsProvider(),
+    ApplicationHandlersProvider(),
+    ApplicationAssistantProvider(),
+    ApplicationToolsProvider(),
+    ApplicationOutboxProvider(),
     DatabaseProvider(),
     InfrastructureProvider(),
     SchedulerProvider(),
-    ApplicationProvider(),
+    SettingsProvider(),
 )

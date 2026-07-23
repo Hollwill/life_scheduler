@@ -86,7 +86,7 @@ from infrastructure.notifiers import AiogramTelegramNotifier
 from settings import Settings
 
 
-class ApplicationProvider(Provider):
+class ApplicationHandlersProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_or_create_user_handler(
         self,
@@ -155,50 +155,66 @@ class ApplicationProvider(Provider):
         return UpdateTaskTemplateHandler(uow=uow)
 
     @provide(scope=Scope.REQUEST)
-    def get_event_dispatcher(
-        self, uow: UnitOfWork, telegram_notifier: TelegramNotifier
-    ) -> EventDispatcher:
-        return EventDispatcher(
-            handlers={
-                ReminderNotificationRequested: [
-                    SendTelegramReminderHandler(
-                        uow=uow, telegram_notifier=telegram_notifier
-                    ),
-                ],
-                DailyAgendaRequested: [
-                    SendTelegramDailyAgendaHandler(
-                        uow=uow, telegram_notifier=telegram_notifier
-                    )
-                ],
-            }
-        )
-
-    @provide(scope=Scope.REQUEST)
-    def get_outbox_messages_handler(
-        self,
-        outbox_repository: OutboxRepository,
-        uow: UnitOfWork,
-        dispatcher: EventDispatcher,
-    ) -> DispatchOutboxMessagesHandler:
-        return DispatchOutboxMessagesHandler(
-            outbox_repository=outbox_repository,
-            uow=uow,
-            dispatcher=dispatcher,
-            event_registry={
-                event_cls.event_type: event_cls
-                for event_cls in [
-                    ReminderNotificationRequested,
-                    DailyAgendaRequested,
-                ]
-            },
-        )
-
-    @provide(scope=Scope.REQUEST)
     def get_miss_overdue_task_instances_handler(
         self,
         uow: UnitOfWork,
     ) -> MissOverdueTaskInstancesHandler:
         return MissOverdueTaskInstancesHandler(uow=uow)
+
+    @provide(scope=Scope.REQUEST)
+    def get_generate_task_reminders_handler(
+        self,
+        uow: UnitOfWork,
+    ) -> GenerateTaskRemindersHandler:
+        return GenerateTaskRemindersHandler(uow=uow)
+
+    @provide(scope=Scope.REQUEST)
+    def get_generate_daily_agenda_handler(
+        self,
+        uow: UnitOfWork,
+    ) -> GenerateDailyAgendaHandler:
+        return GenerateDailyAgendaHandler(uow=uow)
+
+    @provide(scope=Scope.REQUEST)
+    def get_generate_tasks_for_day_handler(
+        self, uow: UnitOfWork
+    ) -> GenerateTasksForDayHandler:
+        return GenerateTasksForDayHandler(
+            uow=uow,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def get_set_user_timezone_handler(self, uow: UnitOfWork) -> SetUserTimezoneHandler:
+        return SetUserTimezoneHandler(
+            uow=uow,
+        )
+
+
+class ApplicationToolsProvider(Provider):
+    @provide(scope=Scope.REQUEST)
+    def get_tool_dispatcher(
+        self,
+        create_task_template_tool: CreateTaskTemplateTool,
+        create_task_instance_tool: CreateTaskInstanceTool,
+        update_task_template_tool: UpdateTaskTemplateTool,
+        deactivate_task_template_tool: DeactivateTaskTemplateTool,
+        get_task_templates_tool: GetTaskTemplatesTool,
+        set_user_timezone_tool: SetUserTimezoneTool,
+    ) -> ToolDispatcher:
+
+        return ToolDispatcher(
+            tools={
+                tool.name: tool
+                for tool in [
+                    create_task_template_tool,
+                    create_task_instance_tool,
+                    update_task_template_tool,
+                    deactivate_task_template_tool,
+                    get_task_templates_tool,
+                    set_user_timezone_tool,
+                ]
+            }
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_create_task_template_tool(
@@ -236,31 +252,8 @@ class ApplicationProvider(Provider):
     ) -> SetUserTimezoneTool:
         return SetUserTimezoneTool(handler=set_user_timezone_handler)
 
-    @provide(scope=Scope.REQUEST)
-    def get_tool_dispatcher(
-        self,
-        create_task_template_tool: CreateTaskTemplateTool,
-        create_task_instance_tool: CreateTaskInstanceTool,
-        update_task_template_tool: UpdateTaskTemplateTool,
-        deactivate_task_template_tool: DeactivateTaskTemplateTool,
-        get_task_templates_tool: GetTaskTemplatesTool,
-        set_user_timezone_tool: SetUserTimezoneTool,
-    ) -> ToolDispatcher:
 
-        return ToolDispatcher(
-            tools={
-                tool.name: tool
-                for tool in [
-                    create_task_template_tool,
-                    create_task_instance_tool,
-                    update_task_template_tool,
-                    deactivate_task_template_tool,
-                    get_task_templates_tool,
-                    set_user_timezone_tool,
-                ]
-            }
-        )
-
+class ApplicationAssistantProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_chat_client(self, settings: Settings) -> ChatClient:
         assert settings.llm_model
@@ -294,32 +287,45 @@ class ApplicationProvider(Provider):
             prompt_builder=prompt_builder,
         )
 
-    @provide(scope=Scope.REQUEST)
-    def get_generate_task_reminders_handler(
-        self,
-        uow: UnitOfWork,
-    ) -> GenerateTaskRemindersHandler:
-        return GenerateTaskRemindersHandler(uow=uow)
 
+class ApplicationOutboxProvider(Provider):
     @provide(scope=Scope.REQUEST)
-    def get_generate_daily_agenda_handler(
+    def get_outbox_messages_handler(
         self,
+        outbox_repository: OutboxRepository,
         uow: UnitOfWork,
-    ) -> GenerateDailyAgendaHandler:
-        return GenerateDailyAgendaHandler(uow=uow)
-
-    @provide(scope=Scope.REQUEST)
-    def get_generate_tasks_for_day_handler(
-        self, uow: UnitOfWork
-    ) -> GenerateTasksForDayHandler:
-        return GenerateTasksForDayHandler(
+        dispatcher: EventDispatcher,
+    ) -> DispatchOutboxMessagesHandler:
+        return DispatchOutboxMessagesHandler(
+            outbox_repository=outbox_repository,
             uow=uow,
+            dispatcher=dispatcher,
+            event_registry={
+                event_cls.event_type: event_cls
+                for event_cls in [
+                    ReminderNotificationRequested,
+                    DailyAgendaRequested,
+                ]
+            },
         )
 
     @provide(scope=Scope.REQUEST)
-    def get_set_user_timezone_handler(self, uow: UnitOfWork) -> SetUserTimezoneHandler:
-        return SetUserTimezoneHandler(
-            uow=uow,
+    def get_event_dispatcher(
+        self, uow: UnitOfWork, telegram_notifier: TelegramNotifier
+    ) -> EventDispatcher:
+        return EventDispatcher(
+            handlers={
+                ReminderNotificationRequested: [
+                    SendTelegramReminderHandler(
+                        uow=uow, telegram_notifier=telegram_notifier
+                    ),
+                ],
+                DailyAgendaRequested: [
+                    SendTelegramDailyAgendaHandler(
+                        uow=uow, telegram_notifier=telegram_notifier
+                    )
+                ],
+            }
         )
 
 
@@ -374,8 +380,6 @@ class DatabaseProvider(Provider):
     ) -> ConversationHistoryRepository:
         return MemoryConversationHistoryRepository(db=memory_db)
 
-
-class InfrastructureProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def user_repository(
         self,
@@ -407,6 +411,18 @@ class InfrastructureProvider(Provider):
         )
 
     @provide(scope=Scope.REQUEST)
+    def outbox_repository(
+        self,
+        session: AsyncSession,
+    ) -> OutboxRepository:
+
+        return SqlAlchemyOutboxRepository(
+            session=session,
+        )
+
+
+class InfrastructureProvider(Provider):
+    @provide(scope=Scope.REQUEST)
     def bot(self, settings: Settings) -> Bot:
         assert settings.telegram_bot_token
 
@@ -425,16 +441,6 @@ class InfrastructureProvider(Provider):
     def telegram_notifier(self, bot: Bot) -> TelegramNotifier:
         return AiogramTelegramNotifier(
             bot=bot,
-        )
-
-    @provide(scope=Scope.REQUEST)
-    def outbox_repository(
-        self,
-        session: AsyncSession,
-    ) -> OutboxRepository:
-
-        return SqlAlchemyOutboxRepository(
-            session=session,
         )
 
 
