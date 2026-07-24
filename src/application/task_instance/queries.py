@@ -30,7 +30,9 @@ class GetTaskInstancesHandler(
 
     async def handle(self, query: GetTaskInstancesQuery) -> list[TaskInstanceResponse]:
         task_instances = await self.task_instance_repository.get_all_by_user(
-            user_id=query.user_id, from_date=query.now.date(), to_date=query.day
+            user_id=query.user_id,
+            from_date=query.day or query.now.date(),
+            to_date=query.day,
         )
         user = await self.user_repository.get_by_id(query.user_id)
 

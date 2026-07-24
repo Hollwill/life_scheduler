@@ -130,6 +130,7 @@ async def test_tasks_handler(user_id: uuid.UUID):
     await tasks(
         message,
         command,
+        user_id=user_id,
         dishka_container=container,  # noqa
     )
 
