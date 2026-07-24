@@ -6,6 +6,8 @@ import pydantic
 from application.llm.base import Tool
 from application.llm.context import ToolContext
 from application.task_instance.commands import (
+    CompleteTaskInstanceCommand,
+    CompleteTaskInstanceHandler,
     CreateTaskInstanceCommand,
     CreateTaskInstanceHandler,
 )
@@ -59,4 +61,40 @@ class CreateTaskInstanceTool(Tool):
             "scheduled_at": (
                 payload.scheduled_at.isoformat() if payload.scheduled_at else None
             ),
+        }
+
+
+class CompleteTaskInstanceToolInput(pydantic.BaseModel):
+    task_instance_public_id: str
+
+
+class CompleteTaskInstanceTool(Tool):
+    input_model = CompleteTaskInstanceToolInput
+
+    name = "complete_task_instance"
+    description = (
+        "Mark a task as completed. "
+        "Use this when the user says they have completed, finished, or done a one-time task."
+    )
+
+    def __init__(
+        self,
+        handler: CompleteTaskInstanceHandler,
+    ):
+        self.handler = handler
+
+    async def call(
+        self,
+        payload: CompleteTaskInstanceToolInput,
+        context: ToolContext,
+    ) -> dict[str, typing.Any]:
+        command = CompleteTaskInstanceCommand(
+            task_instance_public_id=payload.task_instance_public_id,
+        )
+
+        await self.handler.handle(command)
+
+        return {
+            "status": "success",
+            "task_instance_public_id": payload.task_instance_public_id,
         }

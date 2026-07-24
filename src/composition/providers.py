@@ -43,7 +43,10 @@ from application.task_instance.events import (
     ReminderNotificationRequested,
 )
 from application.task_instance.queries import GetTaskInstancesHandler
-from application.task_instance.tools import CreateTaskInstanceTool
+from application.task_instance.tools import (
+    CompleteTaskInstanceTool,
+    CreateTaskInstanceTool,
+)
 from application.task_template.commands import (
     CreateTaskTemplateHandler,
     DeactivateTaskTemplateHandler,
@@ -200,6 +203,7 @@ class ApplicationToolsProvider(Provider):
         deactivate_task_template_tool: DeactivateTaskTemplateTool,
         get_task_templates_tool: GetTaskTemplatesTool,
         set_user_timezone_tool: SetUserTimezoneTool,
+        complete_task_instance_tool: CompleteTaskInstanceTool,
     ) -> ToolDispatcher:
 
         return ToolDispatcher(
@@ -208,6 +212,7 @@ class ApplicationToolsProvider(Provider):
                 for tool in [
                     create_task_template_tool,
                     create_task_instance_tool,
+                    complete_task_instance_tool,
                     update_task_template_tool,
                     deactivate_task_template_tool,
                     get_task_templates_tool,
@@ -251,6 +256,12 @@ class ApplicationToolsProvider(Provider):
         self, set_user_timezone_handler: SetUserTimezoneHandler
     ) -> SetUserTimezoneTool:
         return SetUserTimezoneTool(handler=set_user_timezone_handler)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_complete_task_instance_tool(
+        self, complete_task_instance_handler: CompleteTaskInstanceHandler
+    ) -> CompleteTaskInstanceTool:
+        return CompleteTaskInstanceTool(handler=complete_task_instance_handler)
 
 
 class ApplicationAssistantProvider(Provider):
