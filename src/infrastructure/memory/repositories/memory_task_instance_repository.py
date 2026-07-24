@@ -39,14 +39,25 @@ class MemoryTaskInstanceRepository(TaskInstanceRepository):
             if task_instance.occurrence_date == day
         ]
 
-    async def get_all_by_user_per_day(
-        self, user_id: uuid.UUID, day: datetime.date
+    async def get_all_by_user(
+        self,
+        user_id: uuid.UUID,
+        from_date: datetime.date,
+        to_date: datetime.date | None = None,
     ) -> collections.abc.Collection[TaskInstance]:
-        return [
+        task_instances = [
             task_instance
             for task_instance in self.db.task_instances.values()
-            if task_instance.occurrence_date == day and task_instance.user_id == user_id
+            if task_instance.occurrence_date >= from_date
+            and task_instance.user_id == user_id
         ]
+        if to_date:
+            task_instances = [
+                task_instance
+                for task_instance in task_instances
+                if task_instance.occurrence_date <= to_date
+            ]
+        return task_instances
 
     async def get_all_for_remind(
         self, now: datetime.datetime

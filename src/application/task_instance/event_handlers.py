@@ -59,8 +59,11 @@ class SendTelegramDailyAgendaHandler(EventHandler[DailyAgendaRequested]):
         if not user:
             raise UserNotFoundException({"user_id": event.user_id})
 
-        task_instances = await self.uow.task_instances.get_all_by_user_per_day(
-            user_id=uuid.UUID(event.user_id), day=datetime.date.fromisoformat(event.day)
+        day = datetime.date.fromisoformat(event.day)
+        task_instances = await self.uow.task_instances.get_all_by_user(
+            user_id=uuid.UUID(event.user_id),
+            from_date=day,
+            to_date=day,
         )
 
         result = TaskInstancesFormatter.format(task_instances)

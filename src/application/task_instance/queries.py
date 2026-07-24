@@ -12,7 +12,8 @@ from domain.user.repository import UserRepository
 @dataclasses.dataclass
 class GetTaskInstancesQuery:
     user_id: uuid.UUID
-    day: datetime.date
+    day: datetime.date | None
+    now: datetime.datetime
 
 
 class GetTaskInstancesHandler(
@@ -28,8 +29,8 @@ class GetTaskInstancesHandler(
         self.user_repository = user_repository
 
     async def handle(self, query: GetTaskInstancesQuery) -> list[TaskInstanceResponse]:
-        task_instances = await self.task_instance_repository.get_all_by_user_per_day(
-            user_id=query.user_id, day=query.day
+        task_instances = await self.task_instance_repository.get_all_by_user(
+            user_id=query.user_id, from_date=query.now.date(), to_date=query.day
         )
         user = await self.user_repository.get_by_id(query.user_id)
 

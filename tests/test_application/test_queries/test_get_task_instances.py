@@ -27,6 +27,10 @@ from tests.factories.user import UserFactory
     (datetime.date.fromisoformat("2021-01-10"),),
 )
 @pytest.mark.parametrize(
+    "now",
+    (datetime.datetime.fromisoformat("2021-01-10"),),
+)
+@pytest.mark.parametrize(
     (
         "task_instance",
         "expected_response",
@@ -76,6 +80,7 @@ async def test_get_task_instances(
     day: datetime.date,
     task_instance: TaskInstance,
     expected_response: list[TaskInstanceResponse],
+    now: datetime.datetime,
 ):
 
     await memory_task_instance_repository.save(task_instance)
@@ -86,10 +91,7 @@ async def test_get_task_instances(
     )
 
     response = await handler.handle(
-        GetTaskInstancesQuery(
-            user_id=user_id,
-            day=day,
-        )
+        GetTaskInstancesQuery(user_id=user_id, day=day, now=now)
     )
 
     assert response == expected_response
@@ -146,6 +148,7 @@ async def test_get_task_instances_converts_scheduled_at_to_user_timezone(
         GetTaskInstancesQuery(
             user_id=user_id,
             day=datetime.date.fromisoformat("2021-01-10"),
+            now=datetime.datetime.fromisoformat("2021-01-10"),
         )
     )
 

@@ -144,6 +144,59 @@ async def test_get_all_by_day(
         ),
     ),
 )
+@pytest.mark.parametrize(
+    "matching_task_instance",
+    (
+        TaskInstanceFactory.build(
+            user_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+            occurrence_date=datetime.date.fromisoformat("2026-05-30"),
+        ),
+        TaskInstanceFactory.build(
+            user_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+            occurrence_date=datetime.date.fromisoformat("2026-05-31"),
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "other_task_instance",
+    (
+        TaskInstanceFactory.build(
+            user_id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
+            occurrence_date=datetime.date.fromisoformat("2026-05-30"),
+        ),
+    ),
+)
+async def test_get_all_by_user(
+    sqlalchemy_task_instance_repository: SqlAlchemyTaskInstanceRepository,
+    user_id: uuid.UUID,
+    matching_task_instance: TaskInstance,
+    other_task_instance: TaskInstance,
+):
+
+    await sqlalchemy_task_instance_repository.save(
+        matching_task_instance,
+    )
+
+    await sqlalchemy_task_instance_repository.save(
+        other_task_instance,
+    )
+
+    instances = await sqlalchemy_task_instance_repository.get_all_by_user(
+        user_id, from_date=datetime.date.fromisoformat("2026-05-30")
+    )
+
+    assert len(instances) == 1
+    assert next(iter(instances)).id == (matching_task_instance.id)
+
+
+@pytest.mark.parametrize(
+    "user_id",
+    (
+        uuid.UUID(
+            "00000000-0000-0000-0000-000000000000",
+        ),
+    ),
+)
 @pytest.mark.parametrize("target_day", (datetime.date.fromisoformat("2026-05-30"),))
 @pytest.mark.parametrize(
     "matching_task_instance",
@@ -183,9 +236,10 @@ async def test_get_all_by_user_per_day(
         other_task_instance,
     )
 
-    instances = await sqlalchemy_task_instance_repository.get_all_by_user_per_day(
+    instances = await sqlalchemy_task_instance_repository.get_all_by_user(
         user_id,
-        target_day,
+        from_date=target_day,
+        to_date=target_day,
     )
 
     assert len(instances) == 1

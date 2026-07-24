@@ -28,8 +28,11 @@ class TaskInstanceRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_all_by_user_per_day(
-        self, user_id: uuid.UUID, day: datetime.date
+    async def get_all_by_user(
+        self,
+        user_id: uuid.UUID,
+        from_date: datetime.date,
+        to_date: datetime.date | None = None,
     ) -> collections.abc.Collection[TaskInstance]:
         pass
 

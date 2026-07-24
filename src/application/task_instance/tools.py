@@ -158,7 +158,7 @@ class CompleteTaskInstanceTool(Tool):
 
 
 class GetTaskInstancesToolInput(pydantic.BaseModel):
-    day: datetime.date
+    day: datetime.date | None = None
 
 
 class GetTaskInstancesTool(Tool):
@@ -166,7 +166,9 @@ class GetTaskInstancesTool(Tool):
 
     name = "get_task_instances"
     description = (
-        "Retrieve all task instances for a specific day. "
+        "Retrieve task instances. "
+        "If `day` is specified, returns task instances scheduled for that day. "
+        "If `day` is omitted, returns all upcoming task instances (today and later). "
         "Use this when the user asks about today's, tomorrow's, yesterday's, "
         "or any specific day's tasks. "
         "Also use it before completing or modifying a task if you need to identify "
@@ -187,6 +189,7 @@ class GetTaskInstancesTool(Tool):
         query = GetTaskInstancesQuery(
             user_id=context.user_id,
             day=payload.day,
+            now=context.now,
         )
 
         task_instances = await self.handler.handle(query)

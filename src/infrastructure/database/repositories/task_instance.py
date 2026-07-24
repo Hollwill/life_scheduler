@@ -40,13 +40,20 @@ class SqlAlchemyTaskInstanceRepository(TaskInstanceRepository):
         result = await self.session.execute(stmt)
         return list(result.scalars())
 
-    async def get_all_by_user_per_day(
-        self, user_id: uuid.UUID, day: datetime.date
+    async def get_all_by_user(
+        self,
+        user_id: uuid.UUID,
+        from_date: datetime.date,
+        to_date: datetime.date | None = None,
     ) -> collections.abc.Collection[TaskInstance]:
-        stmt = select(TaskInstance).where(
-            task_instance_table.c.occurrence_date == day,
+        conditions = [
             task_instance_table.c.user_id == user_id,
-        )
+            task_instance_table.c.occurrence_date >= from_date,
+        ]
+
+        if to_date:
+            conditions.append(task_instance_table.c.occurrence_date <= to_date)
+        stmt = select(TaskInstance).where(*conditions)
         result = await self.session.execute(stmt)
         return list(result.scalars())
 

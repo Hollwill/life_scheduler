@@ -146,6 +146,7 @@ async def tasks(
         query=GetTaskInstancesQuery(
             user_id=user_id,
             day=datetime.datetime.now(tz=datetime.UTC).date(),
+            now=datetime.datetime.now(tz=datetime.UTC),
         ),
     )
 
