@@ -11,6 +11,10 @@ from application.task_instance.commands import (
     CreateTaskInstanceCommand,
     CreateTaskInstanceHandler,
 )
+from application.task_instance.queries import (
+    GetTaskInstancesHandler,
+    GetTaskInstancesQuery,
+)
 
 
 class CreateTaskInstanceToolInput(pydantic.BaseModel):
@@ -98,3 +102,42 @@ class CompleteTaskInstanceTool(Tool):
             "status": "success",
             "task_instance_public_id": payload.task_instance_public_id,
         }
+
+
+class GetTaskInstancesToolInput(pydantic.BaseModel):
+    day: datetime.date
+
+
+class GetTaskInstancesTool(Tool):
+    input_model = GetTaskInstancesToolInput
+
+    name = "get_task_instances"
+    description = (
+        "Retrieve all task instances for a specific day. "
+        "Use this when the user asks about today's, tomorrow's, yesterday's, "
+        "or any specific day's tasks. "
+        "Also use it before completing or modifying a task if you need to identify "
+        "the correct task instance."
+    )
+
+    def __init__(
+        self,
+        handler: GetTaskInstancesHandler,
+    ):
+        self.handler = handler
+
+    async def call(
+        self,
+        payload: GetTaskInstancesToolInput,
+        context: ToolContext,
+    ) -> list[dict[str, typing.Any]]:
+        query = GetTaskInstancesQuery(
+            user_id=context.user_id,
+            day=payload.day,
+        )
+
+        task_instances = await self.handler.handle(query)
+
+        return [
+            task_instance.model_dump(mode="json") for task_instance in task_instances
+        ]

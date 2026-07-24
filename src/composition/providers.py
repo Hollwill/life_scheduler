@@ -46,6 +46,7 @@ from application.task_instance.queries import GetTaskInstancesHandler
 from application.task_instance.tools import (
     CompleteTaskInstanceTool,
     CreateTaskInstanceTool,
+    GetTaskInstancesTool,
 )
 from application.task_template.commands import (
     CreateTaskTemplateHandler,
@@ -202,6 +203,7 @@ class ApplicationToolsProvider(Provider):
         update_task_template_tool: UpdateTaskTemplateTool,
         deactivate_task_template_tool: DeactivateTaskTemplateTool,
         get_task_templates_tool: GetTaskTemplatesTool,
+        get_task_instances_tool: GetTaskInstancesTool,
         set_user_timezone_tool: SetUserTimezoneTool,
         complete_task_instance_tool: CompleteTaskInstanceTool,
     ) -> ToolDispatcher:
@@ -216,6 +218,7 @@ class ApplicationToolsProvider(Provider):
                     update_task_template_tool,
                     deactivate_task_template_tool,
                     get_task_templates_tool,
+                    get_task_instances_tool,
                     set_user_timezone_tool,
                 ]
             }
@@ -262,6 +265,12 @@ class ApplicationToolsProvider(Provider):
         self, complete_task_instance_handler: CompleteTaskInstanceHandler
     ) -> CompleteTaskInstanceTool:
         return CompleteTaskInstanceTool(handler=complete_task_instance_handler)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_get_task_instances_tool(
+        self, get_task_instances_handler: GetTaskInstancesHandler
+    ) -> GetTaskInstancesTool:
+        return GetTaskInstancesTool(handler=get_task_instances_handler)
 
 
 class ApplicationAssistantProvider(Provider):
