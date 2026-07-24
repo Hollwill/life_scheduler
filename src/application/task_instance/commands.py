@@ -2,6 +2,7 @@ import dataclasses
 import datetime
 import typing
 import uuid
+from zoneinfo import ZoneInfo
 
 from application.common.base import CommandHandler
 from application.common.unit_of_work import UnitOfWork
@@ -12,6 +13,7 @@ from application.task_instance.events import (
 from application.task_instance.exceptions import TaskInstanceNotFoundException
 from domain.common.aggregate_root import EMPTY, _Empty
 from domain.task_instance.aggregate import TaskInstance
+from domain.user.value_objects import TimeZone
 
 
 @dataclasses.dataclass
@@ -30,16 +32,43 @@ class CreateTaskInstanceHandler(CommandHandler[CreateTaskInstanceCommand, None])
 
     async def handle(self, command: CreateTaskInstanceCommand) -> None:
         async with self.uow:
+            user = await self.uow.users.get_by_id(command.user_id)
+
+            scheduled_at = self._calculate_scheduled_at(
+                command.occurrence_date,
+                command.scheduled_at,
+                user.timezone,
+            )
             task_instance = TaskInstance.create(
                 task_template_id=None,
                 user_id=command.user_id,
                 title=command.title,
                 description=command.description,
-                occurrence_date=command.occurrence_date,
-                scheduled_at=command.scheduled_at,
+                occurrence_date=(
+                    scheduled_at.date() if scheduled_at else command.occurrence_date
+                ),  # TODO некрасивый костыль, надо поправить
+                scheduled_at=scheduled_at,
                 now=command.now,
             )
             await self.uow.task_instances.save(task_instance)
+
+    # TODO Убрать дублирование преобразования
+    @staticmethod
+    def _calculate_scheduled_at(
+        occurrence_date: datetime.date,
+        scheduled_at: datetime.datetime | None,
+        timezone: TimeZone,
+    ) -> datetime.datetime | None:
+        if not scheduled_at:
+            return None
+
+        local_datetime = datetime.datetime.combine(
+            date=occurrence_date,
+            time=scheduled_at.time(),
+            tzinfo=ZoneInfo(timezone.value),
+        )
+        utc_reminder_time = local_datetime.astimezone(datetime.UTC)
+        return utc_reminder_time
 
 
 @dataclasses.dataclass
