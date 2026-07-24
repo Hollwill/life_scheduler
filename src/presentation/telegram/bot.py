@@ -36,6 +36,7 @@ from presentation.telegram.parsers import (
     parse_create_one_time,
     parse_create_weekly,
     parse_create_yearly,
+    parse_date_optional,
     parse_public_id,
 )
 from presentation.telegram.renderers import (
@@ -139,13 +140,17 @@ async def complete_task(
 @inject
 async def tasks(
     message: Message,
+    command: CommandObject,
     user_id: uuid.UUID,
     get_task_instances_handler: FromDishka[GetTaskInstancesHandler],
 ):
+    day = parse_date_optional(
+        command_raw=command.args,
+    )
     task_instances = await get_task_instances_handler.handle(
         query=GetTaskInstancesQuery(
             user_id=user_id,
-            day=datetime.datetime.now(tz=datetime.UTC).date(),
+            day=day,
             now=datetime.datetime.now(tz=datetime.UTC),
         ),
     )

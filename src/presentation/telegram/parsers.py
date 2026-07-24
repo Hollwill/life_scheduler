@@ -277,3 +277,13 @@ def parse_public_id(command_raw):
     if not public_id or len(public_id.split()) != 1:
         raise ParseError("Should be passed only one argument.")
     return public_id
+
+
+def parse_date_optional(command_raw) -> datetime.date | None:
+    if not command_raw:
+        return None
+    try:
+        date = datetime.date.fromisoformat(command_raw)
+    except ValueError:
+        raise ParseError("Date should be in valid format.")
+    return date
