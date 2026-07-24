@@ -1,5 +1,6 @@
 import dataclasses
 import datetime
+import typing
 import uuid
 
 from application.common.base import CommandHandler
@@ -9,6 +10,7 @@ from application.task_instance.events import (
     ReminderNotificationRequested,
 )
 from application.task_instance.exceptions import TaskInstanceNotFoundException
+from domain.common.aggregate_root import EMPTY, _Empty
 from domain.task_instance.aggregate import TaskInstance
 
 
@@ -38,6 +40,56 @@ class CreateTaskInstanceHandler(CommandHandler[CreateTaskInstanceCommand, None])
                 now=command.now,
             )
             await self.uow.task_instances.save(task_instance)
+
+
+@dataclasses.dataclass
+class UpdateTaskInstanceCommand:
+    task_instance_public_id: str
+    title: str | _Empty = EMPTY
+    description: str | None | _Empty = EMPTY
+    occurrence_date: datetime.date | _Empty = EMPTY
+    scheduled_at: datetime.datetime | None | _Empty = EMPTY
+    now: datetime.datetime | _Empty = EMPTY
+
+
+class UpdateTaskInstanceHandler(
+    CommandHandler[UpdateTaskInstanceCommand, dict[str, typing.Any]]
+):
+    def __init__(
+        self,
+        uow: UnitOfWork,
+    ) -> None:
+        self.uow = uow
+
+    async def handle(
+        self,
+        command: UpdateTaskInstanceCommand,
+    ) -> dict[str, typing.Any]:
+        async with self.uow:
+            task_instance = await self.uow.task_instances.get_by_public_id(
+                command.task_instance_public_id
+            )
+
+            if task_instance is None:
+                raise TaskInstanceNotFoundException(
+                    {
+                        "task_instance_public_id": command.task_instance_public_id,
+                    }
+                )
+
+            task_instance.edit(
+                title=command.title,
+                description=command.description,
+                occurrence_date=command.occurrence_date,
+                scheduled_at=command.scheduled_at,
+            )
+
+            await self.uow.task_instances.save(task_instance)
+
+        return {
+            "status": "success",
+            "task_instance_public_id": task_instance.public_id,
+        }
 
 
 @dataclasses.dataclass

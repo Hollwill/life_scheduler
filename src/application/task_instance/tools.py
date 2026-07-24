@@ -10,11 +10,14 @@ from application.task_instance.commands import (
     CompleteTaskInstanceHandler,
     CreateTaskInstanceCommand,
     CreateTaskInstanceHandler,
+    UpdateTaskInstanceCommand,
+    UpdateTaskInstanceHandler,
 )
 from application.task_instance.queries import (
     GetTaskInstancesHandler,
     GetTaskInstancesQuery,
 )
+from domain.common.aggregate_root import EMPTY
 
 
 class CreateTaskInstanceToolInput(pydantic.BaseModel):
@@ -66,6 +69,56 @@ class CreateTaskInstanceTool(Tool):
                 payload.scheduled_at.isoformat() if payload.scheduled_at else None
             ),
         }
+
+
+class UpdateTaskInstanceToolInput(pydantic.BaseModel):
+    task_instance_public_id: str
+    title: str | None = None
+    description: str | None = None
+    occurrence_date: datetime.date | None = None
+    scheduled_at: datetime.datetime | None = None
+
+
+class UpdateTaskInstanceTool(Tool):
+    input_model = UpdateTaskInstanceToolInput
+
+    name = "update_task_instance"
+    description = "update a task instance"
+
+    def __init__(
+        self,
+        handler: UpdateTaskInstanceHandler,
+    ):
+        self.handler = handler
+
+    async def call(
+        self,
+        payload: UpdateTaskInstanceToolInput,
+        context: ToolContext,
+    ) -> dict[str, typing.Any]:
+
+        command = UpdateTaskInstanceCommand(
+            task_instance_public_id=payload.task_instance_public_id,
+            title=(payload.title if "title" in payload.model_fields_set else EMPTY),
+            description=(
+                payload.description
+                if "description" in payload.model_fields_set
+                else EMPTY
+            ),
+            occurrence_date=(
+                payload.occurrence_date
+                if "occurrence_date" in payload.model_fields_set
+                else EMPTY
+            ),
+            scheduled_at=(
+                payload.scheduled_at
+                if "scheduled_at" in payload.model_fields_set
+                else EMPTY
+            ),
+            now=context.now,
+        )
+
+        return await self.handler.handle(command=command)
 
 
 class CompleteTaskInstanceToolInput(pydantic.BaseModel):

@@ -4,11 +4,13 @@ from typing import NamedTuple
 
 import pytest
 
+from domain.common.aggregate_root import EMPTY, _Empty
 from domain.task_template.aggregate import TaskTemplate
 from domain.task_template.entities import (
     DailyTrigger,
     MonthlyTrigger,
     OneTimeTrigger,
+    Trigger,
     WeeklyTrigger,
     YearlyTrigger,
 )
@@ -82,6 +84,88 @@ def test_task_template(
 
     assert task_template.occurs_on(check_day) == expected_occurs
     assert task_template.reminder_at(check_day) == expected_reminder
+
+
+class EditTaskTemplateTestCase(NamedTuple):
+    title: str | _Empty = EMPTY
+    description: str | None | _Empty = EMPTY
+    trigger: Trigger | _Empty = EMPTY
+
+    expected_title: str = "old title"
+    expected_description: str | None = "old description"
+    expected_trigger_reminder_time: datetime.time | None = None
+
+    expected_edit_time: datetime.datetime = datetime.datetime.fromisoformat(
+        "2026-05-19T11:00"
+    )
+
+
+@pytest.mark.parametrize("user", (UserFactory.build(),))
+@pytest.mark.parametrize(
+    EditTaskTemplateTestCase._fields,
+    [
+        EditTaskTemplateTestCase(
+            title="new title",
+            expected_title="new title",
+        ),
+        EditTaskTemplateTestCase(
+            description="new description",
+            expected_description="new description",
+        ),
+        EditTaskTemplateTestCase(
+            description=None,
+            expected_description=None,
+        ),
+        EditTaskTemplateTestCase(
+            trigger=DailyTrigger(
+                id=uuid.uuid4(),
+                reminder_time=datetime.time(12, 0),
+            ),
+            expected_trigger_reminder_time=datetime.time(12, 0),
+        ),
+        EditTaskTemplateTestCase(
+            expected_edit_time=datetime.datetime.fromisoformat("2026-05-19T10:00"),
+        ),
+    ],
+)
+@pytest.mark.parametrize("now", (datetime.datetime.fromisoformat("2026-05-19T10:00"),))
+def test_task_template_edit(
+    user: User,
+    title: str | _Empty,
+    description: str | None | _Empty,
+    trigger: Trigger | _Empty,
+    expected_title: str,
+    expected_description: str | None,
+    expected_trigger_reminder_time: datetime.time | None,
+    expected_edit_time: datetime.datetime,
+    now: datetime.datetime,
+):
+
+    task_template = TaskTemplate.create(
+        user_id=user.id,
+        title="old title",
+        description="old description",
+        trigger=DailyTrigger(
+            id=uuid.uuid4(),
+            reminder_time=None,
+        ),
+        now=now,
+    )
+
+    edit_time = now + datetime.timedelta(hours=1)
+
+    task_template.edit(
+        title=title,
+        description=description,
+        trigger=trigger,
+        now=edit_time,
+    )
+
+    assert task_template.title == expected_title
+    assert task_template.description == expected_description
+    assert isinstance(task_template.trigger, DailyTrigger)
+    assert task_template.trigger.reminder_time == expected_trigger_reminder_time
+    assert task_template.updated_at == expected_edit_time
 
 
 @pytest.mark.parametrize(

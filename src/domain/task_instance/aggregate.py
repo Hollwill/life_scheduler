@@ -3,6 +3,7 @@ import uuid
 from enum import Enum
 
 from domain.common import AggregateRoot
+from domain.common.aggregate_root import EMPTY
 from domain.common.utils import generate_public_id
 from domain.task_instance.exceptions import (
     TaskInstanceInvalidPostponeDateException,
@@ -73,6 +74,26 @@ class TaskInstance(AggregateRoot[uuid.UUID]):
             postpone_reason=None,
             reminded_at=None,
         )
+
+    def edit(
+        self,
+        title: str | object = EMPTY,
+        description: str | None | object = EMPTY,
+        occurrence_date: datetime.date | object = EMPTY,
+        scheduled_at: datetime.datetime | None | object = EMPTY,
+    ) -> None:
+        if title is not EMPTY:
+            assert isinstance(title, str)
+            self.title = title
+        if description is not EMPTY:
+            assert isinstance(description, str | None)
+            self.description = description
+        if occurrence_date is not EMPTY:
+            assert isinstance(occurrence_date, datetime.date)
+            self.occurrence_date = occurrence_date
+        if scheduled_at is not EMPTY:
+            assert isinstance(scheduled_at, None | datetime.datetime)
+            self.scheduled_at = scheduled_at
 
     @property
     def is_completed(self) -> bool:

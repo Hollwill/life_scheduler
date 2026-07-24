@@ -4,6 +4,16 @@ from domain.common.entity import Entity
 from domain.common.event import DomainEvent
 
 
+class _Empty:
+    __slots__ = ()
+
+    def __repr__(self) -> str:
+        return "EMPTY"
+
+
+EMPTY = _Empty()
+
+
 class AggregateRoot[TId](Entity[TId]):
     def __init__(self, id: TId):
         super().__init__(id)

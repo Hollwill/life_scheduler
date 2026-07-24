@@ -33,6 +33,7 @@ from application.task_instance.commands import (
     GenerateTaskRemindersHandler,
     MissOverdueTaskInstancesCommand,
     MissOverdueTaskInstancesHandler,
+    UpdateTaskInstanceHandler,
 )
 from application.task_instance.event_handlers import (
     SendTelegramDailyAgendaHandler,
@@ -47,6 +48,7 @@ from application.task_instance.tools import (
     CompleteTaskInstanceTool,
     CreateTaskInstanceTool,
     GetTaskInstancesTool,
+    UpdateTaskInstanceTool,
 )
 from application.task_template.commands import (
     CreateTaskTemplateHandler,
@@ -116,6 +118,13 @@ class ApplicationHandlersProvider(Provider):
         uow: UnitOfWork,
     ) -> CreateTaskInstanceHandler:
         return CreateTaskInstanceHandler(uow=uow)
+
+    @provide(scope=Scope.REQUEST)
+    def update_task_instance_handler(
+        self,
+        uow: UnitOfWork,
+    ) -> UpdateTaskInstanceHandler:
+        return UpdateTaskInstanceHandler(uow=uow)
 
     @provide(scope=Scope.REQUEST)
     def get_task_instances_handler(
@@ -271,6 +280,12 @@ class ApplicationToolsProvider(Provider):
         self, get_task_instances_handler: GetTaskInstancesHandler
     ) -> GetTaskInstancesTool:
         return GetTaskInstancesTool(handler=get_task_instances_handler)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_update_task_instance_tool(
+        self, update_task_instance_handler: UpdateTaskInstanceHandler
+    ) -> UpdateTaskInstanceTool:
+        return UpdateTaskInstanceTool(handler=update_task_instance_handler)
 
 
 class ApplicationAssistantProvider(Provider):

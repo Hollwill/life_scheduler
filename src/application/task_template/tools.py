@@ -17,13 +17,14 @@ from application.task_template.queries import (
     GetTaskTemplatesQuery,
 )
 from application.task_template.schemas import TriggerPayload
+from domain.common.aggregate_root import EMPTY
 
 
 class UpdateTaskTemplateToolInput(pydantic.BaseModel):
     task_template_public_id: str
-    title: str
-    description: str | None
-    trigger_payload: TriggerPayload
+    title: str | None = None
+    description: str | None = None
+    trigger_payload: TriggerPayload | None = None
 
 
 class UpdateTaskTemplateTool(Tool):
@@ -44,9 +45,17 @@ class UpdateTaskTemplateTool(Tool):
 
         command = UpdateTaskTemplateCommand(
             task_template_public_id=payload.task_template_public_id,
-            title=payload.title,
-            description=payload.description,
-            trigger_payload=payload.trigger_payload,
+            title=payload.title if "title" in payload.model_fields_set else EMPTY,
+            description=(
+                payload.description
+                if "description" in payload.model_fields_set
+                else EMPTY
+            ),
+            trigger_payload=(
+                payload.trigger_payload
+                if "trigger_payload" in payload.model_fields_set
+                else EMPTY
+            ),
             now=context.now,
         )
 

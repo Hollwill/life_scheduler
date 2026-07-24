@@ -3,10 +3,9 @@ import typing
 import uuid
 
 from domain.common import AggregateRoot
+from domain.common.aggregate_root import EMPTY
 from domain.common.utils import generate_public_id
 from domain.task_template.entities import Trigger
-
-EMPTY = object()
 
 
 class TaskTemplate(AggregateRoot[uuid.UUID]):

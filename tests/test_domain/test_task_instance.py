@@ -1,8 +1,10 @@
 import datetime
-import typing
+import uuid
+from typing import NamedTuple
 
 import pytest
 
+from domain.common.aggregate_root import EMPTY, _Empty
 from domain.task_instance.aggregate import TaskInstance, TaskStatus
 from domain.task_instance.exceptions import (
     TaskInstanceInvalidPostponeDateException,
@@ -10,9 +12,146 @@ from domain.task_instance.exceptions import (
     TaskInstanceInvalidStatusException,
     TaskInstanceReminderTimeNotComeYet,
 )
-from domain.task_template.aggregate import TaskTemplate
 from tests.factories.task_instance import TaskInstanceFactory
-from tests.factories.task_template import TaskTemplateFactory
+
+
+@pytest.mark.parametrize(
+    (
+        "task_template_id",
+        "user_id",
+        "title",
+        "description",
+        "occurrence_date",
+        "scheduled_at",
+    ),
+    (
+        (
+            uuid.uuid4(),
+            uuid.uuid4(),
+            "task title",
+            "task description",
+            datetime.date(2026, 7, 25),
+            datetime.datetime(2026, 7, 25, 19, 0),
+        ),
+        (
+            None,
+            uuid.uuid4(),
+            "one time task",
+            None,
+            datetime.date(2026, 7, 26),
+            None,
+        ),
+    ),
+)
+def test_task_instance_create(
+    task_template_id: uuid.UUID | None,
+    user_id: uuid.UUID,
+    title: str,
+    description: str | None,
+    occurrence_date: datetime.date,
+    scheduled_at: datetime.datetime | None,
+    now: datetime.datetime,
+):
+    task_instance = TaskInstance.create(
+        task_template_id=task_template_id,
+        user_id=user_id,
+        title=title,
+        description=description,
+        occurrence_date=occurrence_date,
+        scheduled_at=scheduled_at,
+        now=now,
+    )
+
+    assert task_instance.task_template_id == task_template_id
+    assert task_instance.user_id == user_id
+    assert task_instance.title == title
+    assert task_instance.description == description
+    assert task_instance.occurrence_date == occurrence_date
+    assert task_instance.scheduled_at == scheduled_at
+
+    assert task_instance.created_at == now
+    assert task_instance.status == TaskStatus.PENDING
+    assert task_instance.postpone_reason is None
+    assert task_instance.reminded_at is None
+
+    assert task_instance.id is not None
+    assert task_instance.public_id is not None
+
+
+class EditTaskInstanceTestCase(NamedTuple):
+    title: str | _Empty = EMPTY
+    description: str | None | _Empty = EMPTY
+    occurrence_date: datetime.date | _Empty = EMPTY
+    scheduled_at: datetime.datetime | None | _Empty = EMPTY
+
+    expected_title: str = "old title"
+    expected_description: str | None = "old description"
+    expected_occurrence_date: datetime.date = datetime.date(2026, 5, 19)
+    expected_scheduled_at: datetime.datetime | None = datetime.datetime.fromisoformat(
+        "2026-05-19T11:00"
+    )
+
+
+@pytest.mark.parametrize(
+    EditTaskInstanceTestCase._fields,
+    [
+        EditTaskInstanceTestCase(
+            title="new title",
+            expected_title="new title",
+        ),
+        EditTaskInstanceTestCase(
+            description="new description",
+            expected_description="new description",
+        ),
+        EditTaskInstanceTestCase(
+            description=None,
+            expected_description=None,
+        ),
+        EditTaskInstanceTestCase(
+            occurrence_date=datetime.date(2026, 5, 20),
+            expected_occurrence_date=datetime.date(2026, 5, 20),
+        ),
+        EditTaskInstanceTestCase(
+            scheduled_at=datetime.datetime.fromisoformat("2026-05-19T15:00"),
+            expected_scheduled_at=datetime.datetime.fromisoformat("2026-05-19T15:00"),
+        ),
+        EditTaskInstanceTestCase(
+            scheduled_at=None,
+            expected_scheduled_at=None,
+        ),
+    ],
+)
+def test_task_instance_edit(
+    title: str | _Empty,
+    description: str | None | _Empty,
+    occurrence_date: datetime.date | _Empty,
+    scheduled_at: datetime.datetime | None | _Empty,
+    expected_title: str,
+    expected_description: str | None,
+    expected_occurrence_date: datetime.date,
+    expected_scheduled_at: datetime.datetime | None,
+):
+    task_instance = TaskInstance.create(
+        task_template_id=uuid.uuid4(),
+        user_id=uuid.uuid4(),
+        title="old title",
+        description="old description",
+        occurrence_date=datetime.date(2026, 5, 19),
+        scheduled_at=datetime.datetime.fromisoformat("2026-05-19T11:00"),
+        now=datetime.datetime.fromisoformat("2026-05-19T10:00"),
+    )
+
+    task_instance.edit(
+        title=title,
+        description=description,
+        occurrence_date=occurrence_date,
+        scheduled_at=scheduled_at,
+    )
+
+    assert task_instance.title == expected_title
+    assert task_instance.description == expected_description
+    assert task_instance.occurrence_date == expected_occurrence_date
+    assert task_instance.scheduled_at == expected_scheduled_at
 
 
 @pytest.mark.parametrize(
@@ -133,158 +272,6 @@ def test_task_instance_postpone_invalid_date(
         task_instance.postpone(
             new_occurrence_date=now.date() + postpone_offset, now=now
         )
-
-
-# @pytest.mark.parametrize(
-#     "task_template",
-#     (
-#         TaskTemplateFactory.build(
-#             title="Template Title",
-#             description="Template Description",
-#             created_at=datetime.datetime.fromisoformat("2026-01-01T10:00:00"),
-#             trigger=DailyTriggerFactory.build(
-#                 reminder_time=datetime.time.fromisoformat("12:00:00")
-#             ),
-#         ),
-#     ),
-# )
-# @pytest.mark.parametrize(
-#     ("generate_day", "now", "expected_scheduled_at"),
-#     (
-#         (
-#             datetime.date.fromisoformat("2026-05-24"),
-#             datetime.datetime.fromisoformat("2026-05-24T08:00:00"),
-#             datetime.datetime.fromisoformat("2026-05-24T12:00:00"),
-#         ),
-#     ),
-# )
-# def test_generate_task_instance_from_template_success(
-#     task_template,
-#     generate_day: datetime.date,
-#     now: datetime.datetime,
-#     expected_scheduled_at: datetime.datetime,
-# ):
-#     instance = TaskGenerationService.generate_from_template(
-#         template=task_template, day=generate_day, now=now
-#     )
-#     assert instance.task_template_id == task_template.id
-#     assert instance.user_id == task_template.user_id
-#     assert instance.title == task_template.title
-#     assert instance.description == task_template.description
-#     assert instance.occurrence_date == generate_day
-#     assert instance.scheduled_at == expected_scheduled_at
-#     assert instance.created_at == now
-#     assert not instance.is_completed
-
-
-# @pytest.mark.parametrize(
-#     "task_template",
-#     (
-#         TaskTemplateFactory.build(
-#             trigger=WeeklyTriggerFactory.build(
-#                 weekdays=frozenset([Weekday.MONDAY]),
-#             )
-#         ),
-#     ),
-# )
-# @pytest.mark.parametrize(
-#     ("generate_day", "creation_now"),
-#     (
-#         (
-#             datetime.date.fromisoformat("2026-05-24"),  # Sunday
-#             datetime.datetime.fromisoformat("2026-05-24T08:00:00"),
-#         ),
-#     ),
-# )
-# def test_generate_task_instance_from_template_not_scheduled(
-#     task_template, generate_day: datetime.date, creation_now: datetime.datetime
-# ):
-#     task_instance = TaskGenerationService.generate_from_template(
-#         template=task_template, day=generate_day, now=creation_now
-#     )
-#     assert task_instance is None
-
-
-# @pytest.mark.parametrize(
-#     "task_template",
-#     (
-#         TaskTemplateFactory.build(
-#             title="Template Title",
-#             trigger=DailyTriggerFactory.build(
-#                 reminder_time=datetime.time.fromisoformat("12:00:00")
-#             ),
-#         ),
-#     ),
-# )
-# @pytest.mark.parametrize("new_title", ("New Title",))
-# @pytest.mark.parametrize(
-#     ("generate_day", "now"),
-#     (
-#         (
-#             datetime.date.fromisoformat("2026-05-24"),
-#             datetime.datetime.fromisoformat("2026-05-24T08:00:00"),
-#         ),
-#     ),
-# )
-# def test_generate_task_instance_independence(
-#     task_template: TaskTemplate,
-#     new_title: str,
-#     generate_day: datetime.date,
-#     now: datetime.datetime,
-# ):
-#
-#     instance = TaskGenerationService.generate_from_template(
-#         template=task_template, day=generate_day, now=now
-#     )
-#
-#     # Change template
-#     initial_title = task_template.title
-#     task_template.edit(title=new_title, now=datetime.datetime.now())
-#
-#     assert instance.title == initial_title
-#     assert task_template.title == new_title
-
-
-@pytest.mark.parametrize(
-    "task_template",
-    (TaskTemplateFactory.build(),),
-)
-@pytest.mark.parametrize(
-    ("updated_field", "new_value", "check_attribute", "non_changed_attributes"),
-    (
-        (
-            "title",
-            "new_title",
-            "title",
-            ("description", "trigger"),
-        ),
-        (
-            "description",
-            "new_description",
-            "description",
-            ("title", "trigger"),
-        ),
-    ),
-)
-def test_task_template_edit(
-    task_template: TaskTemplate,
-    updated_field: str,
-    new_value: typing.Any,
-    check_attribute: str,
-    non_changed_attributes: tuple[str, ...],
-    now: datetime.datetime,
-):
-    original_values = {
-        attr: getattr(task_template, attr)
-        for attr in (check_attribute, *non_changed_attributes)
-    }
-
-    task_template.edit(**{updated_field: new_value}, now=now)
-
-    assert getattr(task_template, check_attribute) == new_value
-
-    for attr in non_changed_attributes:
-        assert getattr(task_template, attr) == original_values[attr]
 
 
 def test_task_instance_mark_reminded(

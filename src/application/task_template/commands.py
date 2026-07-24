@@ -12,6 +12,7 @@ from application.task_template.exceptions import TaskTemplateNotFoundException
 from application.task_template.schemas import TriggerPayload
 from application.task_template.trigger_mapper import TriggerMapper
 from application.user.exceptions import UserNotFoundException
+from domain.common.aggregate_root import EMPTY, _Empty
 from domain.task_instance.aggregate import TaskInstance
 from domain.task_template.aggregate import TaskTemplate
 from domain.user.aggregate import User
@@ -56,10 +57,10 @@ class CreateTaskTemplateHandler(CommandHandler[CreateTaskTemplateCommand, str]):
 @dataclasses.dataclass
 class UpdateTaskTemplateCommand:
     task_template_public_id: str
-    title: str
-    description: str | None
-    trigger_payload: TriggerPayload
-    now: datetime.datetime
+    title: str | _Empty = EMPTY
+    description: str | None | _Empty = EMPTY
+    trigger_payload: TriggerPayload | _Empty = EMPTY
+    now: datetime.datetime | _Empty = EMPTY
 
 
 class UpdateTaskTemplateHandler(
